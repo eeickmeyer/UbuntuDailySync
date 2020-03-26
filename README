@@ -1,0 +1,22 @@
+Ubuntu Daily Sync
+by Erich Eickmeyer
+
+License: GPL-2
+
+This set of scripts uses zsync to synchronize the daily Ubuntu ISO images
+
+Requires: zsync
+
+Installation:
+Clone this git repository to any directory of your choosing. Make sure all
+scripts are executable (chmod +x -r *)
+
+Usage: sync-dailies [newcycle|newconfig <codename>]
+                    [setmirror <URL>]
+                    [unsetmirror]
+
+newcycle     Updates configuration with new codename and performs sync
+newconfig    Creates configuration file with new codename and exits
+setmirror    Sets mirror URL (format: without leading http:// or trailing /)
+             NOTE: Must be http URL
+unsetmirror  Sets mirror to default (http://cdimage.ubuntu.com)
