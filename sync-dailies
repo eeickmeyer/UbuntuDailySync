@@ -1,0 +1,97 @@
+#!/bin/bash
+if [ -f ./sync-dailies.config ]; then
+  . sync-dailies.config
+  OLDCODENAME=${CODENAME}
+else
+  echo "Config not found. Please enter current cycle with this:"
+  echo "    sync-dailies newconfig <codename>"
+  exit 1
+fi
+if [ "$1" = "help" ]; then
+  echo "Usage: sync-dailies [newcycle|newconfig <codename>]"
+  echo "                    [setmirror <URL>]"
+  echo " "
+  echo "newcycle     Updates configuration with new codename and performs sync"
+  echo "newconfig    Creates configuration file with new codename and exits"
+  echo "setmirror    Sets mirror URL (format: without leading http:// or trailing /)"
+  echo "             NOTE: Must be http URL"
+  echo "unsetmirror  Sets mirror to default (http://cdimage.ubuntu.com)"
+  exit 0
+fi
+if [ "$1" = "newconfig" ]; then
+  if [ "$2" = "" ]; then
+    echo "Usage: sync-dailies newconfig <codename>"
+    exit 1
+  fi
+  echo "CODENAME=$2" > sync-dailies.config
+  chmod +x sync-dailies.config
+  echo "New config file generated."
+  exit 0
+fi
+if [ "$1" = "setmirror" ]; then
+  if [ "$2" = "" ]; then
+    echo "Usage: sync-dailies setmirror <URL>"
+    exit 1
+  fi
+  echo "CODENAME=${CODENAME}" > sync-dailies.config
+  echo "MIRROR=$2" >> sync-dailies.config
+  chmod +x sync-dailies.config
+  echo "New mirror set"
+  exit 0
+fi
+if [ "$1" = "unsetmirror" ]; then
+  echo "CODENAME=${CODENAME}" > sync-dailies.config
+  echo "MIRROR=" >> sync=dailies.config
+  chmod +x sync-dailies.config
+  echo "Mirror set to default"
+  exit 0
+fi
+if [ "$1" = "newcycle" ]; then
+  if [ "$2" = "" ]; then
+    echo "Usage: sync-dailies newcycle <codename>"
+    exit 1
+  fi
+  echo "CODENAME=$2" > sync-dailies.config
+  echo "MIRROR=${MIRROR}" >> sync-dailies.config
+  chmod +x sync-dailies.config
+  CODENAME=$2
+  cd Kubuntu
+  . sync-iso.sh
+  cd ../Lubuntu
+  . sync-iso.sh
+  cd ../Ubuntu
+  . sync-iso.sh
+  cd ../Ubuntu\ Budgie
+  . sync-iso.sh
+  cd ../Ubuntu\ MATE
+  . sync-iso.sh 
+  cd ../Ubuntu\ Studio
+  . sync-iso.sh
+  cd ../Xubuntu
+  . sync-iso.sh
+  cd ..
+  exit 0
+fi
+if [ "$1" = "" ]; then
+  cd Kubuntu
+  . sync-iso.sh
+  cd ../Lubuntu
+  . sync-iso.sh
+  cd ../Ubuntu
+  . sync-iso.sh
+  cd ../Ubuntu\ Budgie
+  . sync-iso.sh
+  cd ../Ubuntu\ MATE
+  . sync-iso.sh 
+  cd ../Ubuntu\ Studio
+  . sync-iso.sh
+  cd ../Xubuntu
+  . sync-iso.sh
+  cd ..
+  exit 0
+else
+  echo "Usage: sync-dailies [newcycle|newconfig <codename>]"
+  exit 1
+fi
+
+  
