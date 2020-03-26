@@ -63,6 +63,8 @@ if [ "$1" = "newcycle" ]; then
   . sync-iso.sh
   cd ../Ubuntu\ Budgie
   . sync-iso.sh
+  cd ../Ubuntu\ Kylin
+  . sync-iso.sh
   cd ../Ubuntu\ MATE
   . sync-iso.sh 
   cd ../Ubuntu\ Studio
@@ -80,6 +82,8 @@ if [ "$1" = "" ]; then
   cd ../Ubuntu
   . sync-iso.sh
   cd ../Ubuntu\ Budgie
+  . sync-iso.sh
+  cd ../Ubuntu\ Kylin
   . sync-iso.sh
   cd ../Ubuntu\ MATE
   . sync-iso.sh 
