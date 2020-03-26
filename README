@@ -1,5 +1,5 @@
 Ubuntu Daily Sync
-by Erich Eickmeyer
+Copyright (C) 2020 Erich Eickmeyer
 
 License: GPL-2
 
@@ -17,6 +17,6 @@ Usage: sync-dailies [newcycle|newconfig <codename>]
 
 newcycle     Updates configuration with new codename and performs sync
 newconfig    Creates configuration file with new codename and exits
-setmirror    Sets mirror URL (format: without leading http:// or trailing /)
+setmirror    Sets mirror URL (format: without trailing /)
              NOTE: Must be http URL
 unsetmirror  Sets mirror to default (http://cdimage.ubuntu.com)

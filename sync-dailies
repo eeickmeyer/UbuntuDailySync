@@ -13,7 +13,7 @@ if [ "$1" = "help" ]; then
   echo " "
   echo "newcycle     Updates configuration with new codename and performs sync"
   echo "newconfig    Creates configuration file with new codename and exits"
-  echo "setmirror    Sets mirror URL (format: without leading http:// or trailing /)"
+  echo "setmirror    Sets mirror URL (format: without trailing /)"
   echo "             NOTE: Must be http URL"
   echo "unsetmirror  Sets mirror to default (http://cdimage.ubuntu.com)"
   exit 0
