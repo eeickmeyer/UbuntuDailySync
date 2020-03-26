@@ -10,6 +10,7 @@ fi
 if [ "$1" = "help" ]; then
   echo "Usage: sync-dailies [newcycle|newconfig <codename>]"
   echo "                    [setmirror <URL>]"
+  echo "                    [unsetmirror]"
   echo " "
   echo "newcycle     Updates configuration with new codename and performs sync"
   echo "newconfig    Creates configuration file with new codename and exits"
