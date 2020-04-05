@@ -11,12 +11,49 @@ Installation:
 Clone this git repository to any directory of your choosing. Make sure all
 scripts are executable (chmod +x -r *)
 
-Usage: sync-dailies [newcycle|newconfig <codename>]
+Usage: sync-dailies [newcycle|newconfig <codename> <releaseversion>]
                     [setmirror <URL>]
                     [unsetmirror]
 
-newcycle     Updates configuration with new codename and performs sync
-newconfig    Creates configuration file with new codename and exits
+newcycle     Updates configuration with new codename, release version,
+             and performs sync
+newconfig    Creates configuration file with new codename, release
+             version, and exits
 setmirror    Sets mirror URL (format: without trailing /)
              NOTE: Must be http URL
 unsetmirror  Sets mirror to default (http://cdimage.ubuntu.com)
+
+
+Additionally, each flavor has a "sync-iso.sh" script called by the
+main script, but each one can be used individually. For example:
+
+cd Kubuntu
+./sync-iso.sh
+
+If no config file exists (as created by the main script) one must specify a
+codename here. For example:
+
+./sync-iso.sh focal
+
+will download the latest focal daily image.
+
+You can also specify the input file. For instance, Ubuntu MATE and Ubuntu
+Kylin have a lot of similarities. If you already have the daily image of 
+Ubuntu MATE but want to download Ubuntu Kylin's daily image:
+
+cd Ubuntu\ Kylin
+./sync-iso -i ../Ubuntu\ MATE/focal-desktop-amd64.iso
+
+would sync using Ubuntu MATE's image as the base file, only having to download
+a fraction of the entire .iso file.
+
+
+Also included is a script to download the beta images for whichever cycle
+is already downloaded. To accomplish this, simply run:
+
+./get-betas
+
+This will download the beta images to the release-beta folder in the current
+directory. For instance, focal beta would be in the folder "20.04-beta".
+
+TODO: Add final release script
