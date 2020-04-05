@@ -10,7 +10,7 @@ fi
 if [ "$1" = "help" ]; then
   echo "Usage: sync-dailies [newcycle|newconfig <codename>]"
   echo "                    [setmirror <URL>]"
-  echo "                    [unsetmirror]"
+    echo "                    [unsetmirror]"
   echo " "
   echo "newcycle     Updates configuration with new codename and performs sync"
   echo "newconfig    Creates configuration file with new codename and exits"
@@ -42,7 +42,7 @@ if [ "$1" = "setmirror" ]; then
 fi
 if [ "$1" = "unsetmirror" ]; then
   echo "CODENAME=${CODENAME}" > sync-dailies.config
-  echo "MIRROR=" >> sync=dailies.config
+  echo "MIRROR=" >> sync-dailies.config
   chmod +x sync-dailies.config
   echo "Mirror set to default"
   exit 0
@@ -64,9 +64,9 @@ if [ "$1" = "newcycle" ]; then
   . sync-iso.sh
   cd ../Ubuntu\ Budgie
   . sync-iso.sh
-  cd ../Ubuntu\ Kylin
+    cd ../Ubuntu\ Kylin
   . sync-iso.sh
-  cd ../Ubuntu\ MATE
+    cd ../Ubuntu\ MATE
   . sync-iso.sh 
   cd ../Ubuntu\ Studio
   . sync-iso.sh
@@ -84,7 +84,7 @@ if [ "$1" = "" ]; then
   . sync-iso.sh
   cd ../Ubuntu\ Budgie
   . sync-iso.sh
-  cd ../Ubuntu\ Kylin
+    cd ../Ubuntu\ Kylin
   . sync-iso.sh
   cd ../Ubuntu\ MATE
   . sync-iso.sh 
@@ -95,7 +95,7 @@ if [ "$1" = "" ]; then
   cd ..
   exit 0
 else
-  echo "Usage: sync-dailies [newcycle|newconfig <codename>]"
+  echo "Usage: sync-dailies [newcycle|newconfig <codename>][setmirror <url>][unsetmirror]"
   exit 1
 fi
 
