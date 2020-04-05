@@ -1,0 +1,26 @@
+#!/bin/bash
+if [ -f ./sync-dailies.config ]; then
+  . sync-dailies.config
+else
+  echo "Config not found. Please enter current cycle with this:"
+  echo "    sync-dailies newconfig <codename> <releasever>"
+  exit 1
+fi
+cd ..
+if [ -d ./${CODENAME}-beta ]; then
+  cd ${CODENAME}-beta
+else
+  mkdir ${CODENAME}-beta
+  cd ${CODENAME}-beta
+fi
+if [ "${MIRROR}" = "" ]; then
+  MIRROR=http://cdimage.ubuntu.com
+fi
+zsync ${MIRROR}/kubuntu/releases/${CODENAME}/beta/kubuntu-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../UbuntuDailySync/Kubuntu/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/lubuntu/releases/${CODENAME}/beta/lubuntu-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../UbuntuDailySync/Lubuntu/${CODENAME}-desktop-amd64.iso
+zsync http://releases.ubuntu.com/${CODENAME}/ubuntu-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../UbuntuDailySync/Ubuntu/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/ubuntu-budgie/releases/${CODENAME}/beta/ubuntu-budgie-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../UbuntuDailySync/Ubuntu\ Budgie/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/ubuntukylin/releases/${CODENAME}/beta/ubuntukylin-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../UbuntuDailySync/Ubuntu\ Kylin/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/ubuntu-mate/releases/${CODENAME}/beta/ubuntu-mate-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../UbuntuDailySync/Ubuntu\ MATE/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/ubuntustudio/releases/${CODENAME}/beta/ubuntustudio-${RELEASE}-beta-dvd-amd64.iso.zsync -i ../UbuntuDailySync/Ubuntu\ Studio/${CODENAME}-dvd-amd64.iso
+zsync ${MIRROR}/xubuntu/releases/${CODENAME}/beta/xubuntu-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../UbuntuDailySync/Xubuntu/${CODENAME}-desktop-amd64.iso
