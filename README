@@ -4,8 +4,10 @@ Copyright (C) 2020 Erich Eickmeyer
 License: GPL-2
 
 This set of scripts uses zsync to synchronize the daily Ubuntu ISO images
+and includes scripts for downloading beta and final release images.
 
 Requires: zsync
+
 
 Installation:
 Clone this git repository to any directory of your choosing. Make sure all
@@ -20,7 +22,7 @@ newcycle     Updates configuration with new codename, release version,
 newconfig    Creates configuration file with new codename, release
              version, and exits
 setmirror    Sets mirror URL (format: without trailing /)
-             NOTE: Must be http URL
+             NOTE: Must be http URL, zsync doesn't work with https
 unsetmirror  Sets mirror to default (http://cdimage.ubuntu.com)
 
 
@@ -48,12 +50,16 @@ would sync using Ubuntu MATE's image as the base file, only having to download
 a fraction of the entire .iso file.
 
 
-Also included is a script to download the beta images for whichever cycle
-is already downloaded. To accomplish this, simply run:
+Also included are scripts to download the beta and final release images (when
+available) for whichever cycle is already configured. To accomplish this,
+simply run:
 
 ./get-betas
 
-This will download the beta images to the release-beta folder in the current
-directory. For instance, focal beta would be in the folder "20.04-beta".
+  - or -
 
-TODO: Add final release script
+./get-release
+
+This will download the beta or release images to the proper directory in the
+current directory. For instance, focal beta would be in the "20.04-beta"
+directory while the final release would be in the "20.04-release" directory.
