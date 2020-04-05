@@ -1,32 +1,36 @@
 #!/bin/bash
+if [ "$1" = "newconfig" ]; then
+  if [ "$2" = "" ] | [ "$3" = "" ]; then
+    echo "Usage: sync-dailies newconfig <codename> <releasever>"
+    exit 1
+  fi
+  echo "CODENAME=$2" > sync-dailies.config
+  echo "RELEASE=$3" >> sync-dailies.config
+  echo "MIRROR=" >> sync-dailies.config
+  chmod +x sync-dailies.config
+  echo "New config file generated."
+  exit 0
+fi
 if [ -f ./sync-dailies.config ]; then
   . sync-dailies.config
   OLDCODENAME=${CODENAME}
 else
   echo "Config not found. Please enter current cycle with this:"
-  echo "    sync-dailies newconfig <codename>"
+  echo "    sync-dailies newconfig <codename> <releaseversion>"
   exit 1
 fi
 if [ "$1" = "help" ]; then
-  echo "Usage: sync-dailies [newcycle|newconfig <codename>]"
+  echo "Usage: sync-dailies [newcycle|newconfig <codename> <releaseversion>]"
   echo "                    [setmirror <URL>]"
-    echo "                    [unsetmirror]"
+  echo "                    [unsetmirror]"
   echo " "
-  echo "newcycle     Updates configuration with new codename and performs sync"
-  echo "newconfig    Creates configuration file with new codename and exits"
+  echo "newcycle     Updates configuration with new codename, release version,"
+  echo "             and performs sync"
+  echo "newconfig    Creates configuration file with new codename, release"
+  echo "             version, and exits"
   echo "setmirror    Sets mirror URL (format: without trailing /)"
   echo "             NOTE: Must be http URL"
   echo "unsetmirror  Sets mirror to default (http://cdimage.ubuntu.com)"
-  exit 0
-fi
-if [ "$1" = "newconfig" ]; then
-  if [ "$2" = "" ]; then
-    echo "Usage: sync-dailies newconfig <codename>"
-    exit 1
-  fi
-  echo "CODENAME=$2" > sync-dailies.config
-  chmod +x sync-dailies.config
-  echo "New config file generated."
   exit 0
 fi
 if [ "$1" = "setmirror" ]; then
@@ -35,6 +39,7 @@ if [ "$1" = "setmirror" ]; then
     exit 1
   fi
   echo "CODENAME=${CODENAME}" > sync-dailies.config
+  echo "RELEASE=${RELEASE}" >> sync-dailies.config
   echo "MIRROR=$2" >> sync-dailies.config
   chmod +x sync-dailies.config
   echo "New mirror set"
@@ -42,20 +47,23 @@ if [ "$1" = "setmirror" ]; then
 fi
 if [ "$1" = "unsetmirror" ]; then
   echo "CODENAME=${CODENAME}" > sync-dailies.config
+  echo "RELEASE=${RELEASE}" >> sync-dailies.config
   echo "MIRROR=" >> sync-dailies.config
   chmod +x sync-dailies.config
   echo "Mirror set to default"
   exit 0
 fi
 if [ "$1" = "newcycle" ]; then
-  if [ "$2" = "" ]; then
-    echo "Usage: sync-dailies newcycle <codename>"
+  if [ "$2" = "" ] | [ "$3" = "" ]; then
+    echo "Usage: sync-dailies newcycle <codename> <releaseversion>"
     exit 1
   fi
   echo "CODENAME=$2" > sync-dailies.config
+  echo "RELEASE=$3" >> sync-dailies.config
   echo "MIRROR=${MIRROR}" >> sync-dailies.config
   chmod +x sync-dailies.config
   CODENAME=$2
+  RELEASE=$3
   cd Kubuntu
   . sync-iso.sh
   cd ../Lubuntu
@@ -98,5 +106,3 @@ else
   echo "Usage: sync-dailies [newcycle|newconfig <codename>][setmirror <url>][unsetmirror]"
   exit 1
 fi
-
-  
