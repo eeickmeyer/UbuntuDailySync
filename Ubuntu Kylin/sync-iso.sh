@@ -13,6 +13,6 @@ fi
 if [ "${MIRROR}" = "" ]; then
   MIRROR=http://cdimage.ubuntu.com
 fi
-zsync ${MIRROR}/ubuntu-kylin/daily-live/current/${CODENAME}-desktop-amd64.iso.zsync -i ./${OLDCODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/ubuntukylin/daily-live/current/${CODENAME}-desktop-amd64.iso.zsync -i ./${OLDCODENAME}-desktop-amd64.iso
 rm *.zs-old
 
