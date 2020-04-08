@@ -11,7 +11,7 @@ if [ "${CODENAME}" = "" ]; then
   exit 1
 fi
 if [ "${MIRROR}" = "" ]; then
-  MIRROR=https://cdimage.ubuntu.com
+  MIRROR=http://cdimage.ubuntu.com
 fi
 zsync ${MIRROR}/lubuntu/daily-live/current/${CODENAME}-desktop-amd64.iso.zsync -i ./${OLDCODENAME}-desktop-amd64.iso
 rm *.zs-old
