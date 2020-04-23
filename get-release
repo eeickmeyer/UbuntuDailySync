@@ -17,7 +17,7 @@ if [ "${MIRROR}" = "" ]; then
 fi
 zsync ${MIRROR}/kubuntu/releases/${CODENAME}/release/kubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../Kubuntu/${CODENAME}-desktop-amd64.iso
 zsync ${MIRROR}/lubuntu/releases/${CODENAME}/release/lubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../Lubuntu/${CODENAME}-desktop-amd64.iso
-zsync http://releases.ubuntu.com/${CODENAME}/${RELEASE}-desktop-amd64.iso.zsync -i ../Ubuntu/${CODENAME}-desktop-amd64.iso
+zsync http://releases.ubuntu.com/${CODENAME}/ubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../Ubuntu/${CODENAME}-desktop-amd64.iso
 zsync ${MIRROR}/ubuntu-budgie/releases/${CODENAME}/release/ubuntu-budgie-${RELEASE}-desktop-amd64.iso.zsync -i ../Ubuntu\ Budgie/${CODENAME}-desktop-amd64.iso
 zsync ${MIRROR}/ubuntukylin/releases/${CODENAME}/release/ubuntukylin-${RELEASE}-desktop-amd64.iso.zsync -i ../Ubuntu\ Kylin/${CODENAME}-desktop-amd64.iso
 zsync ${MIRROR}/ubuntu-mate/releases/${CODENAME}/release/ubuntu-mate-${RELEASE}-desktop-amd64.iso.zsync -i ../Ubuntu\ MATE/${CODENAME}-desktop-amd64.iso
