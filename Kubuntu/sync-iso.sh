@@ -1,10 +1,12 @@
 #!/bin/bash
-if [ -f ../sync-dailies.config ]; then
-  . ../sync-dailies.config
-  OLDCODENAME=${CODENAME}
-else
-  CODENAME=$1
-  OLDCODENAME=${CODENAME}
+if [ "${OLDCODENAME}" = "" ]; then
+  if [ -f ../sync-dailies.config ]; then
+    . ../sync-dailies.config
+    OLDCODENAME=${CODENAME}
+  else
+    CODENAME=$1
+    OLDCODENAME=${CODENAME}
+  fi
 fi
 if [ "${CODENAME}" = "" ]; then
   echo "No codename provided!"

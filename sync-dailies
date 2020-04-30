@@ -66,20 +66,44 @@ if [ "$1" = "newcycle" ]; then
   RELEASE=$3
   cd Kubuntu
   . sync-iso.sh
+  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
+    rm ${OLDCODENAME}-desktop-amd64.iso
+  fi
   cd ../Lubuntu
   . sync-iso.sh
+  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
+    rm ${OLDCODENAME}-desktop-amd64.iso
+  fi
   cd ../Ubuntu
   . sync-iso.sh
+  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
+    rm ${OLDCODENAME}-desktop-amd64.iso
+  fi
   cd ../Ubuntu\ Budgie
   . sync-iso.sh
-    cd ../Ubuntu\ Kylin
+  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
+    rm ${OLDCODENAME}-desktop-amd64.iso
+  fi
+  cd ../Ubuntu\ Kylin
   . sync-iso.sh
-    cd ../Ubuntu\ MATE
-  . sync-iso.sh 
+  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
+    rm ${OLDCODENAME}-desktop-amd64.iso
+  fi
+  cd ../Ubuntu\ MATE
+  . sync-iso.sh
+  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
+    rm ${OLDCODENAME}-desktop-amd64.iso
+  fi
   cd ../Ubuntu\ Studio
   . sync-iso.sh
+  if [ -f ${CODENAME}-dvd-amd64.iso ]; then
+    rm ${OLDCODENAME}-dvd-amd64.iso
+  fi
   cd ../Xubuntu
   . sync-iso.sh
+  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
+    rm ${OLDCODENAME}-desktop-amd64.iso
+  fi
   cd ..
   exit 0
 fi
