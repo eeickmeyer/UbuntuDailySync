@@ -101,10 +101,11 @@ function syncIsoFn {
   if [ "${LTSACTIVE}" = "true" ]; then LTSDIR="${CODENAME}/"; fi
   echo -e "\nSyncing $1..."
   mkdir -p $1; cd $1
-  if [ "$1" = "ubuntustudio" ]; then
-    LIVEDIR="dvd"
-    IMGNAME="dvd"
-  elif [ "$1" = "ubuntu-mini-iso" ]; then
+  #if [ "$1" = "ubuntustudio" ]; then
+  #  LIVEDIR="dvd"
+  #  IMGNAME="dvd"
+  #el
+  if [ "$1" = "ubuntu-mini-iso" ]; then
     LIVEDIR="daily-live"
     IMGNAME="mini-iso"
   else
@@ -279,10 +280,7 @@ if [ "$1" = "newcycle" ]; then
   for flavor in ${FLAVORLIST}; do
   echo -e "\nSyncing $1..."
   mkdir -p $1; cd $1
-  if [ "$1" = "ubuntustudio" ]; then
-    LIVEDIR="dvd"
-    IMGNAME="dvd"
-  elif [ "$1" = "ubuntu-mini-iso" ]; then
+  if [ "$1" = "ubuntu-mini-iso" ]; then
     LIVEDIR="daily-live"
     IMGNAME="mini-iso"
   else
@@ -320,7 +318,7 @@ if [ "$1" = "newcycle" ]; then
         fi
       done
     fi
-  if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+    if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
     echo "$1 arm64-raspi Synced Most Current"
     else
       errorstate="true"
