@@ -1,4 +1,5 @@
 #!/bin/bash
+FLAVORLIST=("kubuntu" "lubuntu" "ubuntu" "ubuntu-budgie" "ubuntukylin" "ubuntu-mate" "ubuntustudio" "xubuntu")
 if [ "$1" = "newconfig" ]; then
   if [ "$2" = "" ] | [ "$3" = "" ]; then
     echo "Usage: sync-dailies newconfig <codename> <releasever>"
@@ -19,10 +20,38 @@ else
   echo "    sync-dailies newconfig <codename> <releaseversion>"
   exit 1
 fi
+if [ "$1" = "ltsactive" ]; then
+  echo "CODENAME=${CODENAME}" > sync-dailies.config
+  echo "RELEASE=${RELEASE}.1" >> sync-dailies.config
+  echo "MIRROR=${MIRROR}" >> sync-dailies.config
+  echo -e "LTSACTIVE=\"true\"" >> sync-dailies.config
+  chmod +x sync-dailies.config
+  exit 0
+fi
+if [ "$1" = "iteratelts" ]; then
+  if ! [ "${LTSACTIVE}" = "true" ]; then
+    echo "LTS Mode is not acitve! LTS Point Release iteration not possible!"
+    exit 1
+  fi
+  p=$(echo "${RELEASE}" | cut -d "." -f 3)
+  p=$((p+1))
+  orig=$(echo "${RELEASE}" | cut -d "." -f 1,2)
+  RELEASE=$(echo "${orig}.${p}")
+  echo "CODENAME=${CODENAME}" > sync-dailies.config
+  echo "RELEASE=${RELEASE}" >> sync-dailies.config
+  echo "MIRROR=${MIRROR}" >> sync-dailies.config
+  echo "LTSACTIVE=\"true\"" >> sync-dailies.config
+  chmod +x sync-dailies.config
+  echo "Release version now updated to ${RELEASE}"
+  exit 0
+fi
 if [ "$1" = "help" ]; then
   echo "Usage: sync-dailies [newcycle|newconfig <codename> <releaseversion>]"
   echo "                    [setmirror <URL>]"
   echo "                    [unsetmirror]"
+  echo "                    [ltsactive]"
+  echo "                    [iteratelts]"
+  echo "                    [-f <flavor]"
   echo " "
   echo "newcycle     Updates configuration with new codename, release version,"
   echo "             and performs sync"
@@ -31,6 +60,9 @@ if [ "$1" = "help" ]; then
   echo "setmirror    Sets mirror URL (format: without trailing /)"
   echo "             NOTE: Must be http URL"
   echo "unsetmirror  Sets mirror to default (http://cdimage.ubuntu.com)"
+  echo "ltsactive    Sets LTS mode to active (disables newcycle)"
+  echo "iteratelts   Iterates to the next LTS point version"
+  echo "-f <flavor>  Syncs only specified flavor"
   exit 0
 fi
 if [ "$1" = "setmirror" ]; then
@@ -41,6 +73,9 @@ if [ "$1" = "setmirror" ]; then
   echo "CODENAME=${CODENAME}" > sync-dailies.config
   echo "RELEASE=${RELEASE}" >> sync-dailies.config
   echo "MIRROR=$2" >> sync-dailies.config
+  if [ "${LTSACTIVE}" = "true" ]; then
+    echo "LTSACTIVE=\"true\"" >> sync-dailies.config
+  fi
   chmod +x sync-dailies.config
   echo "New mirror set"
   exit 0
@@ -49,11 +84,155 @@ if [ "$1" = "unsetmirror" ]; then
   echo "CODENAME=${CODENAME}" > sync-dailies.config
   echo "RELEASE=${RELEASE}" >> sync-dailies.config
   echo "MIRROR=" >> sync-dailies.config
+  if [ "${LTSACTIVE}" = "true" ]; then
+    echo "LTSACTIVE=\"true\"" >> sync-dailies.config
+  fi
   chmod +x sync-dailies.config
   echo "Mirror set to default"
   exit 0
 fi
+
+function syncIsoFn {
+  . sync-dailies.config
+  OLDCODENAME=${CODENAME}
+  if [ "${MIRROR}" = "" ]; then
+  MIRROR=http://cdimage.ubuntu.com
+  fi
+  if [ "${LTSACTIVE}" = "true" ]; then LTSDIR="${CODENAME}/"; fi
+  echo -e "\nSyncing $1..."
+  mkdir -p $1; cd $1
+  if [ "$1" = "ubuntustudio" ]; then
+    LIVEDIR="dvd"
+    IMGNAME="dvd"
+  elif [ "$1" = "ubuntu-mini-iso" ]; then
+    LIVEDIR="daily-live"
+    IMGNAME="mini-iso"
+  else
+    LIVEDIR="daily-live"
+    IMGNAME="desktop"
+  fi
+  if [ "$1" = "ubuntu" ]; then
+    if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+      echo "$1 Synced Most Current"
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+          unset errorstate
+          unset try
+          echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+          if [ -e *.zs-old ]; then
+            rm *.zs-old
+          fi
+        else
+          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+          if [ "${try}" = "5" ]; then
+            echo "Max tries exceeded. Something is spectacularily wrong."
+            if [ -e *.zs-old ]; then
+              rm *.zs-old
+            fi
+            break
+          fi
+        fi
+      done
+    fi
+    if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+    echo "$1 arm64-raspi Synced Most Current"
+    if [ -e *.zs-old ]; then
+      rm *.zs-old
+    fi
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+          unset errorstate
+          unset try
+          echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+          if [ -e *.zs-old ]; then
+            rm *.zs-old
+          fi
+        else
+          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+          if [ "${try}" = "5" ]; then
+            echo "Max tries exceeded. Something is spectacularily wrong."
+            if [ -e *.zs-old ]; then
+              rm *.zs-old
+            fi
+            break
+          fi
+        fi
+      done
+    fi
+    cd ..
+    return
+  fi
+  if zsync "${MIRROR}/$1/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+    echo "$1 Synced Most Current"
+  else
+    errorstate="true"
+    TIMESTAMP=$(date +%Y%m%d)
+    while [ "${errorstate}" = "true" ]; do
+      try=$((try+1))
+      if zsync "${MIRROR}/$1/${LTSDIR}${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+        unset errorstate
+        unset try
+        echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+        if [ -e *.zs-old ]; then
+          rm *.zs-old
+        fi
+      else
+        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+        if [ "${try}" = "5" ]; then
+          echo "Max tries exceeded. Something is spectacularily wrong."
+          if [ -e *.zs-old ]; then
+            rm *.zs-old
+          fi
+          break
+        fi
+      fi
+    done
+  fi
+  if [ "$1" = "edubuntu" ]; then
+    if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+    echo "$1 arm64-raspi Synced Most Current"
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+        unset errorstate
+        unset try
+        if [ -e *.zs-old ]; then
+          rm *.zs-old
+        fi
+        echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+      else
+        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+        if [ "${try}" = "5" ]; then
+          echo "Max tries exceeded. Something is spectacularily wrong."
+          break
+        fi
+      fi
+    done
+    fi
+  fi
+  cd ..
+}
+
 if [ "$1" = "newcycle" ]; then
+  if [ "{$LTSACTIVE}" = "true" ]; then
+    echo "LTS mode is acitve. New cycle cannot be started from here."
+    exit 1
+  fi
   if [ "$2" = "" ] | [ "$3" = "" ]; then
     echo "Usage: sync-dailies newcycle <codename> <releaseversion>"
     exit 1
@@ -64,69 +243,158 @@ if [ "$1" = "newcycle" ]; then
   chmod +x sync-dailies.config
   CODENAME=$2
   RELEASE=$3
-  cd Kubuntu
-  . sync-iso.sh
-  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
-    rm ${OLDCODENAME}-desktop-amd64.iso
+  if [ "${MIRROR}" = "" ]; then
+  MIRROR=http://cdimage.ubuntu.com
   fi
-  cd ../Lubuntu
-  . sync-iso.sh
-  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
-    rm ${OLDCODENAME}-desktop-amd64.iso
+  unset LTSDIR
+  for flavor in ${FLAVORLIST}; do
+  echo -e "\nSyncing $1..."
+  mkdir -p $1; cd $1
+  if [ "$1" = "ubuntustudio" ]; then
+    LIVEDIR="dvd"
+    IMGNAME="dvd"
+  elif [ "$1" = "ubuntu-mini-iso" ]; then
+    LIVEDIR="daily-live"
+    IMGNAME="mini-iso"
+  else
+    LIVEDIR="daily-live"
+    IMGNAME="desktop"
   fi
-  cd ../Ubuntu
-  . sync-iso.sh
-  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
-    rm ${OLDCODENAME}-desktop-amd64.iso
+  if [ "$1" = "ubuntu" ]; then
+    if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+      echo "$1 Synced Most Current"
+      if [ -e *.zs-old ]; then
+        rm *.zs-old
+      fi
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+          unset errorstate
+          unset try
+          echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+          if [ -e *.zs-old ]; then
+            rm *.zs-old
+          fi
+        else
+          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+          if [ "${try}" = "5" ]; then
+            echo "Max tries exceeded. Something is spectacularily wrong."
+            if [ -e *.zs-old ]; then
+              rm *.zs-old
+            fi
+            break
+          fi
+        fi
+      done
+    fi
+    if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+    echo "$1 arm64-raspi Synced Most Current"
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+          unset errorstate
+          unset try
+          echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+        else
+          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+          if [ "${try}" = "5" ]; then
+            echo "Max tries exceeded. Something is spectacularily wrong."
+            if [ -e *.zs-old ]; then
+              rm *.zs-old
+            fi
+            break
+          fi
+        fi
+      done
+    fi
+    continue
   fi
-  cd ../Ubuntu\ Budgie
-  . sync-iso.sh
-  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
-    rm ${OLDCODENAME}-desktop-amd64.iso
+  if zsync "${MIRROR}/$1/$LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+    echo "$1 Synced Most Current"
+    if [ -e *.zs-old ]; then
+      rm *.zs-old
+    fi
+  else
+    errorstate="true"
+    TIMESTAMP=$(date +%Y%m%d)
+    while [ "${errorstate}" = "true" ]; do
+      if zsync "${MIRROR}/$1/${LTSDIR}${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+        unset errorstate
+        unset try
+        echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+      else
+        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+          if [ "${try}" = "5" ]; then
+            echo "Max tries exceeded. Something is spectacularily wrong."
+            if [ -e *.zs-old ]; then
+              rm *.zs-old
+            fi
+            break
+          fi
+      fi
+    done
   fi
-  cd ../Ubuntu\ Kylin
-  . sync-iso.sh
-  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
-    rm ${OLDCODENAME}-desktop-amd64.iso
-  fi
-  cd ../Ubuntu\ MATE
-  . sync-iso.sh
-  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
-    rm ${OLDCODENAME}-desktop-amd64.iso
-  fi
-  cd ../Ubuntu\ Studio
-  . sync-iso.sh
-  if [ -f ${CODENAME}-dvd-amd64.iso ]; then
-    rm ${OLDCODENAME}-dvd-amd64.iso
-  fi
-  cd ../Xubuntu
-  . sync-iso.sh
-  if [ -f ${CODENAME}-desktop-amd64.iso ]; then
-    rm ${OLDCODENAME}-desktop-amd64.iso
+  if [ "$1" = "edubuntu" ]; then
+    if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+    echo "$1 arm64-raspi Synced Most Current"
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+        unset errorstate
+        unset try
+        echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+      else
+        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+        if [ "${try}" = "5" ]; then
+          echo "Max tries exceeded. Something is spectacularily wrong."
+          if [ -e *.zs-old ]; then
+            rm *.zs-old
+          fi
+          break
+        fi
+      fi
+    done
+    fi
   fi
   cd ..
+  done
   exit 0
 fi
+if [ "$1" = "-f" ]; then
+  for flavor in ${FLAVORLIST[@]}; do
+    if [ "$2" = "${flavor}" ]; then
+      validflavor="true"
+    fi
+  done
+  if [ "${validflavor}" = "true" ]; then
+    syncIsoFn $2
+    exit 0
+  else
+    echo "Invalid flavor. Please select from the following flavors:"
+    echo "${FLAVORLIST[@]}"
+    exit 1
+  fi
+fi
 if [ "$1" = "" ]; then
-  cd Kubuntu
-  . sync-iso.sh
-  cd ../Lubuntu
-  . sync-iso.sh
-  cd ../Ubuntu
-  . sync-iso.sh
-  cd ../Ubuntu\ Budgie
-  . sync-iso.sh
-    cd ../Ubuntu\ Kylin
-  . sync-iso.sh
-  cd ../Ubuntu\ MATE
-  . sync-iso.sh 
-  cd ../Ubuntu\ Studio
-  . sync-iso.sh
-  cd ../Xubuntu
-  . sync-iso.sh
-  cd ..
+  for flavor in ${FLAVORLIST[@]}; do
+    echo -e "\nSyncing $1..."
+    syncIsoFn ${flavor}
+  done
   exit 0
 else
-  echo "Usage: sync-dailies [newcycle|newconfig <codename>][setmirror <url>][unsetmirror]"
+  echo "Usage: sync-dailies [newcycle|newconfig <codename>][setmirror <url>][unsetmirror][ltsactive][iteratelts][-f <flavor>]"
   exit 1
 fi

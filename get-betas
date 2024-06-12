@@ -22,4 +22,5 @@ zsync ${MIRROR}/ubuntu-budgie/releases/${CODENAME}/beta/ubuntu-budgie-${RELEASE}
 zsync ${MIRROR}/ubuntukylin/releases/${CODENAME}/beta/ubuntukylin-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../Ubuntu\ Kylin/${CODENAME}-desktop-amd64.iso
 zsync ${MIRROR}/ubuntu-mate/releases/${CODENAME}/beta/ubuntu-mate-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../Ubuntu\ MATE/${CODENAME}-desktop-amd64.iso
 zsync ${MIRROR}/ubuntustudio/releases/${CODENAME}/beta/ubuntustudio-${RELEASE}-beta-dvd-amd64.iso.zsync -i ../Ubuntu\ Studio/${CODENAME}-dvd-amd64.iso
+zsync ${MIRROR}/ubuntu-unity/releases/${CODENAME}/beta/ubuntu-unity-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../Ubuntu\ Unity/${CODENAME}-dvd-amd64.iso
 zsync ${MIRROR}/xubuntu/releases/${CODENAME}/beta/xubuntu-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../Xubuntu/${CODENAME}-desktop-amd64.iso
