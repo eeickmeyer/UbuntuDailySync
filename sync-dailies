@@ -114,6 +114,9 @@ function syncIsoFn {
   if [ "$1" = "ubuntu" ]; then
     if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
       echo "$1 Synced Most Current"
+      if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
+        rm *.zs-old
+      fi
     else
       errorstate="true"
       TIMESTAMP=$(date +%Y%m%d)
@@ -123,7 +126,7 @@ function syncIsoFn {
           unset errorstate
           unset try
           echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-          if [ -e *.zs-old ]; then
+          if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
             rm *.zs-old
           fi
         else
@@ -131,7 +134,7 @@ function syncIsoFn {
           if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
           if [ "${try}" = "5" ]; then
             echo "Max tries exceeded. Something is spectacularily wrong."
-            if [ -e *.zs-old ]; then
+            if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
               rm *.zs-old
             fi
             break
@@ -141,7 +144,7 @@ function syncIsoFn {
     fi
     if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
     echo "$1 arm64-raspi Synced Most Current"
-    if [ -e *.zs-old ]; then
+    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
       rm *.zs-old
     fi
     else
@@ -153,7 +156,7 @@ function syncIsoFn {
           unset errorstate
           unset try
           echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-          if [ -e *.zs-old ]; then
+          if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
             rm *.zs-old
           fi
         else
@@ -161,7 +164,7 @@ function syncIsoFn {
           if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
           if [ "${try}" = "5" ]; then
             echo "Max tries exceeded. Something is spectacularily wrong."
-            if [ -e *.zs-old ]; then
+            if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
               rm *.zs-old
             fi
             break
@@ -174,6 +177,9 @@ function syncIsoFn {
   fi
   if zsync "${MIRROR}/$1/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
     echo "$1 Synced Most Current"
+    if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
+      rm *.zs-old
+    fi
   else
     errorstate="true"
     TIMESTAMP=$(date +%Y%m%d)
@@ -183,7 +189,7 @@ function syncIsoFn {
         unset errorstate
         unset try
         echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-        if [ -e *.zs-old ]; then
+        if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
           rm *.zs-old
         fi
       else
@@ -191,7 +197,7 @@ function syncIsoFn {
         if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
         if [ "${try}" = "5" ]; then
           echo "Max tries exceeded. Something is spectacularily wrong."
-          if [ -e *.zs-old ]; then
+          if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
             rm *.zs-old
           fi
           break
@@ -202,6 +208,9 @@ function syncIsoFn {
   if [ "$1" = "edubuntu" ]; then
     if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
     echo "$1 arm64-raspi Synced Most Current"
+    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+      rm *.zs-old
+    fi
     else
       errorstate="true"
       TIMESTAMP=$(date +%Y%m%d)
@@ -210,7 +219,7 @@ function syncIsoFn {
         if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
         unset errorstate
         unset try
-        if [ -e *.zs-old ]; then
+        if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
           rm *.zs-old
         fi
         echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
@@ -219,6 +228,9 @@ function syncIsoFn {
         if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
         if [ "${try}" = "5" ]; then
           echo "Max tries exceeded. Something is spectacularily wrong."
+          if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+            rm *.zs-old
+          fi
           break
         fi
       fi
@@ -263,7 +275,7 @@ if [ "$1" = "newcycle" ]; then
   if [ "$1" = "ubuntu" ]; then
     if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
       echo "$1 Synced Most Current"
-      if [ -e *.zs-old ]; then
+      if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
         rm *.zs-old
       fi
     else
@@ -275,7 +287,7 @@ if [ "$1" = "newcycle" ]; then
           unset errorstate
           unset try
           echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-          if [ -e *.zs-old ]; then
+          if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
             rm *.zs-old
           fi
         else
@@ -283,7 +295,7 @@ if [ "$1" = "newcycle" ]; then
           if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
           if [ "${try}" = "5" ]; then
             echo "Max tries exceeded. Something is spectacularily wrong."
-            if [ -e *.zs-old ]; then
+            if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
               rm *.zs-old
             fi
             break
@@ -293,6 +305,9 @@ if [ "$1" = "newcycle" ]; then
     fi
     if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
     echo "$1 arm64-raspi Synced Most Current"
+    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+      rm *.zs-old
+    fi
     else
       errorstate="true"
       TIMESTAMP=$(date +%Y%m%d)
@@ -302,12 +317,15 @@ if [ "$1" = "newcycle" ]; then
           unset errorstate
           unset try
           echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+          if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+            rm *.zs-old
+          fi
         else
           TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
           if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
           if [ "${try}" = "5" ]; then
             echo "Max tries exceeded. Something is spectacularily wrong."
-            if [ -e *.zs-old ]; then
+            if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
               rm *.zs-old
             fi
             break
@@ -319,7 +337,7 @@ if [ "$1" = "newcycle" ]; then
   fi
   if zsync "${MIRROR}/$1/$LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
     echo "$1 Synced Most Current"
-    if [ -e *.zs-old ]; then
+    if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
       rm *.zs-old
     fi
   else
@@ -330,12 +348,15 @@ if [ "$1" = "newcycle" ]; then
         unset errorstate
         unset try
         echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+        if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
+          rm *.zs-old
+        fi
       else
         TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
         if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
           if [ "${try}" = "5" ]; then
             echo "Max tries exceeded. Something is spectacularily wrong."
-            if [ -e *.zs-old ]; then
+            if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
               rm *.zs-old
             fi
             break
@@ -346,6 +367,9 @@ if [ "$1" = "newcycle" ]; then
   if [ "$1" = "edubuntu" ]; then
     if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
     echo "$1 arm64-raspi Synced Most Current"
+    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+      rm *.zs-old
+    fi
     else
       errorstate="true"
       TIMESTAMP=$(date +%Y%m%d)
@@ -355,12 +379,15 @@ if [ "$1" = "newcycle" ]; then
         unset errorstate
         unset try
         echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+        if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+          rm *.zs-old
+        fi
       else
         TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
         if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
         if [ "${try}" = "5" ]; then
           echo "Max tries exceeded. Something is spectacularily wrong."
-          if [ -e *.zs-old ]; then
+          if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
             rm *.zs-old
           fi
           break
