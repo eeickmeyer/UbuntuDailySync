@@ -1,5 +1,5 @@
 #!/bin/bash
-FLAVORLIST=("kubuntu" "lubuntu" "ubuntu" "ubuntu-budgie" "ubuntukylin" "ubuntu-mate" "ubuntustudio" "xubuntu")
+FLAVORLIST=("edubuntu" "kubuntu" "lubuntu" "ubuntu" "ubuntu-budgie" "ubuntucinnamon" "ubuntukylin" "ubuntu-mate" "ubuntu-mini-iso" "ubuntustudio" "ubuntu-unity" "xubuntu")
 if [ "$1" = "newconfig" ]; then
   if [ "$2" = "" ] | [ "$3" = "" ]; then
     echo "Usage: sync-dailies newconfig <codename> <releasever>"
@@ -101,10 +101,11 @@ function syncIsoFn {
   if [ "${LTSACTIVE}" = "true" ]; then LTSDIR="${CODENAME}/"; fi
   echo -e "\nSyncing $1..."
   mkdir -p $1; cd $1
-  if [ "$1" = "ubuntustudio" ]; then
-    LIVEDIR="dvd"
-    IMGNAME="dvd"
-  elif [ "$1" = "ubuntu-mini-iso" ]; then
+  #if [ "$1" = "ubuntustudio" ]; then
+  #  LIVEDIR="dvd"
+  #  IMGNAME="dvd"
+  #el
+  if [ "$1" = "ubuntu-mini-iso" ]; then
     LIVEDIR="daily-live"
     IMGNAME="mini-iso"
   else
@@ -172,6 +173,9 @@ function syncIsoFn {
         fi
       done
     fi
+    if [ -e *.zs-old ]; then
+      rm *.zs-old
+    fi
     cd ..
     return
   fi
@@ -237,6 +241,32 @@ function syncIsoFn {
     done
     fi
   fi
+  if [ "$1" = "xubuntu" ]; then
+    if zsync "${MIRROR}/$1/${LTSDIR}daily-minimal/current/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
+    echo "$1 minimal Synced Most Current"
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/$1/${LTSDIR}daily-minimal/${TIMESTAMP}/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
+        unset errorstate
+        unset try
+        echo "$1 minimal **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+      else
+        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+        if [ "${try}" = "5" ]; then
+          echo "Max tries exceeded. Something is spectacularily wrong."
+          break
+        fi
+      fi
+    done
+    fi
+  fi
+  if [ -e *.zs-old ]; then
+    rm *.zs-old
+  fi
   cd ..
 }
 
@@ -262,10 +292,7 @@ if [ "$1" = "newcycle" ]; then
   for flavor in ${FLAVORLIST}; do
   echo -e "\nSyncing $1..."
   mkdir -p $1; cd $1
-  if [ "$1" = "ubuntustudio" ]; then
-    LIVEDIR="dvd"
-    IMGNAME="dvd"
-  elif [ "$1" = "ubuntu-mini-iso" ]; then
+  if [ "$1" = "ubuntu-mini-iso" ]; then
     LIVEDIR="daily-live"
     IMGNAME="mini-iso"
   else
@@ -395,6 +422,32 @@ if [ "$1" = "newcycle" ]; then
       fi
     done
     fi
+  fi
+  if [ "$1" = "xubuntu" ]; then
+    if zsync "${MIRROR}/$1/${LTSDIR}daily-minimal/current/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
+    echo "$1 minimal Synced Most Current"
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/$1/${LTSDIR}daily-minimal/${TIMESTAMP}/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
+        unset errorstate
+        unset try
+        echo "$1 minimal **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+      else
+        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+        if [ "${try}" = "5" ]; then
+          echo "Max tries exceeded. Something is spectacularily wrong."
+          break
+        fi
+      fi
+    done
+    fi
+  fi
+  if [ -e *.zs-old ]; then
+    rm *.zs-old
   fi
   cd ..
   done
