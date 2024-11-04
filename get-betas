@@ -25,6 +25,8 @@ zsync ${MIRROR}/ubuntu-budgie/releases/${CODENAME}/beta/ubuntu-budgie-${RELEASE}
 zsync ${MIRROR}/ubuntucinnamon/releases/${CODENAME}/beta/ubuntucinnamon-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../ubuntucinnamon/${CODENAME}-desktop-amd64.iso
 zsync ${MIRROR}/ubuntukylin/releases/${CODENAME}/beta/ubuntukylin-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../ubuntukylin/${CODENAME}-desktop-amd64.iso
 zsync ${MIRROR}/ubuntu-mate/releases/${CODENAME}/beta/ubuntu-mate-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../ubuntu-mate/${CODENAME}-desktop-amd64.iso
+zsync http://releases.ubuntu.com/${CODENAME}/beta/ubuntu-${RELEASE}-beta-server-amd64.iso.zsync -i ../ubuntu-server/${CODENAME}-live-server-amd64.iso
+zsync ${MIRROR}/releases/${CODENAME}/beta/ubuntu-${RELEASE}--beta-preinstalled-server-arm64+raspi.img.xz.zsync -i  ../ubuntu-server/${CODENAME}-preinstalled-server-arm64+raspi.img.xz1
 zsync ${MIRROR}/ubuntustudio/releases/${CODENAME}/beta/ubuntustudio-${RELEASE}-beta-dvd-amd64.iso.zsync -i ../ubuntustudio/${CODENAME}-dvd-amd64.iso
 zsync ${MIRROR}/ubuntu-unity/releases/${CODENAME}/beta/ubuntu-unity-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../ubuntu-unity/${CODENAME}-desktop-amd64.iso
 zsync ${MIRROR}/xubuntu/releases/${CODENAME}/beta/xubuntu-${RELEASE}-beta-desktop-amd64.iso.zsync -i ../xubuntu/${CODENAME}-desktop-amd64.iso
