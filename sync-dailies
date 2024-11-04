@@ -109,7 +109,7 @@ function syncIsoFn {
     IMGNAME="mini-iso"
   elif [ "$1" = "ubuntu-server" ]; then
     LIVEDIR="daily-live"
-    IMGNAME="server"
+    IMGNAME="live-server"
   else
     LIVEDIR="daily-live"
     IMGNAME="desktop"
@@ -212,6 +212,7 @@ function syncIsoFn {
     done
   fi
   if [ "$1" = "edubuntu" ] || [ "$1" = "ubuntu-server" ]; then
+    if [ "$1" = "ubuntu-server" ]; then IMGNAME="server"; fi
     if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
     echo "$1 arm64-raspi Synced Most Current"
     if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
@@ -400,6 +401,7 @@ if [ "$1" = "newcycle" ]; then
     done
   fi
   if [ "$1" = "edubuntu" ] || [ "$1" = "ubuntu-server" ]; then
+    if [ "$1" = "ubuntu-server" ]; then IMGNAME="server"; fi
     if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
       echo "$1 arm64-raspi Synced Most Current"
       if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
