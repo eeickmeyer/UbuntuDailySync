@@ -15,17 +15,17 @@ fi
 if [ "${MIRROR}" = "" ]; then
   MIRROR=http://cdimage.ubuntu.com
 fi
-zsync ${MIRROR}/edubuntu/releases/${CODENAME}/release/edubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../Edubuntu/${CODENAME}-desktop-amd64.iso
-zsync ${MIRROR}/edubuntu/releases/${CODENAME}/release/edubuntu-${RELEASE}-preinstalled-desktop-arm64+raspi.img.xz.zsync -i  ../Edubuntu/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz
-zsync ${MIRROR}/kubuntu/releases/${CODENAME}/release/kubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../Kubuntu/${CODENAME}-desktop-amd64.iso
-zsync ${MIRROR}/lubuntu/releases/${CODENAME}/release/lubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../Lubuntu/${CODENAME}-desktop-amd64.iso
-zsync http://releases.ubuntu.com/${CODENAME}/ubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../Ubuntu/${CODENAME}-desktop-amd64.iso
-zsync ${MIRROR}/ubuntu/releases/${CODENAME}/release/ubuntu-${RELEASE}-preinstalled-desktop-arm64+raspi.img.xz.zsync -i ../Ubuntu/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz
-zsync ${MIRROR}/ubuntu-budgie/releases/${CODENAME}/release/ubuntu-budgie-${RELEASE}-desktop-amd64.iso.zsync -i ../Ubuntu\ Budgie/${CODENAME}-desktop-amd64.iso
-zsync ${MIRROR}/ubuntucinnamon/releases/${CODENAME}/release/ubuntucinnamon-${RELEASE}-desktop-amd64.iso.zsync -i ../Ubuntu\ Cinnamon/${CODENAME}-desktop-amd64.iso
-zsync ${MIRROR}/ubuntukylin/releases/${CODENAME}/release/ubuntukylin-${RELEASE}-desktop-amd64.iso.zsync -i ../Ubuntu\ Kylin/${CODENAME}-desktop-amd64.iso
-zsync ${MIRROR}/ubuntu-mate/releases/${CODENAME}/release/ubuntu-mate-${RELEASE}-desktop-amd64.iso.zsync -i ../Ubuntu\ MATE/${CODENAME}-desktop-amd64.iso
-zsync ${MIRROR}/ubuntustudio/releases/${CODENAME}/release/ubuntustudio-${RELEASE}-dvd-amd64.iso.zsync -i ../Ubuntu\ Studio/${CODENAME}-dvd-amd64.iso
-zsync ${MIRROR}/ubuntu-unity/releases/${CODENAME}/release/ubuntu-unity-${RELEASE}-desktop-amd64.iso.zsync -i ../Ubuntu\ Unity/${CODENAME}-desktop-amd64.iso
-zsync ${MIRROR}/xubuntu/releases/${CODENAME}/release/xubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../Xubuntu/${CODENAME}-desktop-amd64.iso
-zsync ${MIRROR}/xubuntu/releases/${CODENAME}/release/xubuntu-${RELEASE}-minimal-amd64.iso.zsync -i ../Xubuntu/${CODENAME}-minimal-amd64.iso
+zsync ${MIRROR}/edubuntu/releases/${CODENAME}/release/edubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../edubuntu/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/edubuntu/releases/${CODENAME}/release/edubuntu-${RELEASE}-preinstalled-desktop-arm64+raspi.img.xz.zsync -i  ../edubuntu/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz
+zsync ${MIRROR}/kubuntu/releases/${CODENAME}/release/kubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../kubuntu/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/lubuntu/releases/${CODENAME}/release/lubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../lubuntu/${CODENAME}-desktop-amd64.iso
+zsync http://releases.ubuntu.com/${CODENAME}/ubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../ubuntu/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/ubuntu/releases/${CODENAME}/release/ubuntu-${RELEASE}-preinstalled-desktop-arm64+raspi.img.xz.zsync -i ../ubuntu/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz
+zsync ${MIRROR}/ubuntu-budgie/releases/${CODENAME}/release/ubuntu-budgie-${RELEASE}-desktop-amd64.iso.zsync -i ../ubuntu-budgie/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/ubuntucinnamon/releases/${CODENAME}/release/ubuntucinnamon-${RELEASE}-desktop-amd64.iso.zsync -i ../ubuntucinnamon/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/ubuntukylin/releases/${CODENAME}/release/ubuntukylin-${RELEASE}-desktop-amd64.iso.zsync -i ../ubuntukylin/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/ubuntu-mate/releases/${CODENAME}/release/ubuntu-mate-${RELEASE}-desktop-amd64.iso.zsync -i ../ubuntu-mate/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/ubuntustudio/releases/${CODENAME}/release/ubuntustudio-${RELEASE}-dvd-amd64.iso.zsync -i ../ubuntustudio/${CODENAME}-dvd-amd64.iso
+zsync ${MIRROR}/ubuntu-unity/releases/${CODENAME}/release/ubuntu-unity-${RELEASE}-desktop-amd64.iso.zsync -i ../ubuntu-unity/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/xubuntu/releases/${CODENAME}/release/xubuntu-${RELEASE}-desktop-amd64.iso.zsync -i ../xubuntu/${CODENAME}-desktop-amd64.iso
+zsync ${MIRROR}/xubuntu/releases/${CODENAME}/release/xubuntu-${RELEASE}-minimal-amd64.iso.zsync -i ../xubuntu/${CODENAME}-minimal-amd64.iso
