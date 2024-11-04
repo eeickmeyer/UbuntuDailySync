@@ -1,5 +1,5 @@
 #!/bin/bash
-FLAVORLIST=("edubuntu" "kubuntu" "lubuntu" "ubuntu" "ubuntu-budgie" "ubuntucinnamon" "ubuntukylin" "ubuntu-mate" "ubuntu-mini-iso" "ubuntustudio" "ubuntu-unity" "xubuntu")
+FLAVORLIST=("edubuntu" "kubuntu" "lubuntu" "ubuntu" "ubuntu-budgie" "ubuntucinnamon" "ubuntukylin" "ubuntu-mate" "ubuntu-mini-iso" "ubuntu-server" "ubuntustudio" "ubuntu-unity" "xubuntu")
 if [ "$1" = "newconfig" ]; then
   if [ "$2" = "" ] | [ "$3" = "" ]; then
     echo "Usage: sync-dailies newconfig <codename> <releasever>"
@@ -107,6 +107,9 @@ function syncIsoFn {
   elif [ "$1" = "ubuntu-mini-iso" ]; then
     LIVEDIR="daily-live"
     IMGNAME="mini-iso"
+  elif [ "$1" = "ubuntu-server" ]; then
+    LIVEDIR="daily-live"
+    IMGNAME="server"
   else
     LIVEDIR="daily-live"
     IMGNAME="desktop"
@@ -142,7 +145,7 @@ function syncIsoFn {
         fi
       done
     fi
-    if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+    if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
     echo "$1 arm64-raspi Synced Most Current"
     if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
       rm *.zs-old
@@ -152,7 +155,7 @@ function syncIsoFn {
       TIMESTAMP=$(date +%Y%m%d)
       while [ "${errorstate}" = "true" ]; do
         try=$((try+1))
-        if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+        if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
           unset errorstate
           unset try
           echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
@@ -208,8 +211,8 @@ function syncIsoFn {
       fi
     done
   fi
-  if [ "$1" = "edubuntu" ]; then
-    if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+  if [ "$1" = "edubuntu" ] || [ "$1" = "ubuntu-server" ]; then
+    if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
     echo "$1 arm64-raspi Synced Most Current"
     if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
       rm *.zs-old
@@ -219,19 +222,19 @@ function syncIsoFn {
       TIMESTAMP=$(date +%Y%m%d)
       while [ "${errorstate}" = "true" ]; do
         try=$((try+1))
-        if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+        if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
         unset errorstate
         unset try
         if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
           rm *.zs-old
         fi
-        echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+        echo "$1 arm64+raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
       else
         TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
         if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
         if [ "${try}" = "5" ]; then
           echo "Max tries exceeded. Something is spectacularily wrong."
-          if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+          if [ -e ${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zs-old ]; then
             rm *.zs-old
           fi
           break
@@ -297,6 +300,9 @@ if [ "$1" = "newcycle" ]; then
   elif [ "$1" = "ubuntu-mini-iso" ]; then
     LIVEDIR="daily-live"
     IMGNAME="mini-iso"
+  elif [ "$1" = "ubuntu-server" ]; then
+    LIVEDIR="daily-live"
+    IMGNAME="server"
   else
     LIVEDIR="daily-live"
     IMGNAME="desktop"
@@ -332,17 +338,17 @@ if [ "$1" = "newcycle" ]; then
         fi
       done
     fi
-  if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
-    echo "$1 arm64-raspi Synced Most Current"
-    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-      rm *.zs-old
-    fi
+    if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+      echo "$1 arm64-raspi Synced Most Current"
+      if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+        rm *.zs-old
+      fi
     else
       errorstate="true"
       TIMESTAMP=$(date +%Y%m%d)
       while [ "${errorstate}" = "true" ]; do
         try=$((try+1))
-        if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+        if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
           unset errorstate
           unset try
           echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
@@ -393,18 +399,18 @@ if [ "$1" = "newcycle" ]; then
       fi
     done
   fi
-  if [ "$1" = "edubuntu" ]; then
-    if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
-    echo "$1 arm64-raspi Synced Most Current"
-    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-      rm *.zs-old
-    fi
+  if [ "$1" = "edubuntu" ] || [ "$1" = "ubuntu-server" ]; then
+    if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+      echo "$1 arm64-raspi Synced Most Current"
+      if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+        rm *.zs-old
+      fi
     else
       errorstate="true"
       TIMESTAMP=$(date +%Y%m%d)
       while [ "${errorstate}" = "true" ]; do
         try=$((try+1))
-        if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-desktop-arm64+raspi.img.xz"; then
+        if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
         unset errorstate
         unset try
         echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
