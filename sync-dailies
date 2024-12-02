@@ -293,22 +293,22 @@ if [ "$1" = "newcycle" ]; then
   MIRROR=http://cdimage.ubuntu.com
   fi
   unset LTSDIR
-  for flavor in ${FLAVORLIST}; do
-  echo -e "\nSyncing $1..."
-  mkdir -p $1; cd $1
-  if [ "$1" = "ubuntu-mini-iso" ]; then
+  for flavor in ${FLAVORLIST[@]}; do
+  echo -e "\nSyncing ${flavor}..."
+  mkdir -p ${flavor}; cd ${flavor}
+  if [ "${flavor}" = "ubuntu-mini-iso" ]; then
     LIVEDIR="daily-live"
     IMGNAME="mini-iso"
-  elif [ "$1" = "ubuntu-server" ]; then
+  elif [ "${flavor}" = "ubuntu-server" ]; then
     LIVEDIR="daily-live"
     IMGNAME="server"
   else
     LIVEDIR="daily-live"
     IMGNAME="desktop"
   fi
-  if [ "$1" = "ubuntu" ]; then
+  if [ "${flavor}" = "ubuntu" ]; then
     if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
-      echo "$1 Synced Most Current"
+      echo "${flavor} Synced Most Current"
       if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
         rm *.zs-old
       fi
@@ -320,7 +320,7 @@ if [ "$1" = "newcycle" ]; then
         if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
           unset errorstate
           unset try
-          echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+          echo "${flavor} amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
           if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
             rm *.zs-old
           fi
@@ -338,7 +338,7 @@ if [ "$1" = "newcycle" ]; then
       done
     fi
     if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
-    echo "$1 arm64-raspi Synced Most Current"
+    echo "${flavor} arm64-raspi Synced Most Current"
     if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
       rm *.zs-old
     fi
@@ -350,7 +350,7 @@ if [ "$1" = "newcycle" ]; then
         if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
           unset errorstate
           unset try
-          echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+          echo "${flavor} arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
           if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
             rm *.zs-old
           fi
@@ -367,10 +367,11 @@ if [ "$1" = "newcycle" ]; then
         fi
       done
     fi
+    cd ..
     continue
   fi
-  if zsync "${MIRROR}/$1/$LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
-    echo "$1 Synced Most Current"
+  if zsync "${MIRROR}/${flavor}/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+    echo "${flavor} Synced Most Current"
     if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
       rm *.zs-old
     fi
@@ -378,30 +379,31 @@ if [ "$1" = "newcycle" ]; then
     errorstate="true"
     TIMESTAMP=$(date +%Y%m%d)
     while [ "${errorstate}" = "true" ]; do
-      if zsync "${MIRROR}/$1/${LTSDIR}${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+      try=$((try+1))
+      if zsync "${MIRROR}/${flavor}/${LTSDIR}${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
         unset errorstate
         unset try
-        echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+        echo "${flavor} amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
         if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
           rm *.zs-old
         fi
       else
         TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
         if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
-          if [ "${try}" = "5" ]; then
-            echo "Max tries exceeded. Something is spectacularily wrong."
-            if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-              rm *.zs-old
-            fi
-            break
+        if [ "${try}" = "5" ]; then
+          echo "Max tries exceeded. Something is spectacularily wrong."
+          if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
+            rm *.zs-old
           fi
+          break
+        fi
       fi
     done
   fi
-  if [ "$1" = "edubuntu" ] || [ "$1" = "ubuntu-server" ]; then
+  if [ "${flavor}" = "edubuntu" ] || [ "${flavor}" = "ubuntu-server" ]; then
     if [ "$1" = "ubuntu-server" ]; then IMGNAME="server"; fi
-    if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
-    echo "$1 arm64-raspi Synced Most Current"
+    if zsync "${MIRROR}/${flavor}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+    echo "${flavor} arm64-raspi Synced Most Current"
     if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
       rm *.zs-old
     fi
@@ -431,18 +433,18 @@ if [ "$1" = "newcycle" ]; then
     done
     fi
   fi
-  if [ "$1" = "xubuntu" ]; then
-    if zsync "${MIRROR}/$1/${LTSDIR}daily-minimal/current/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
-    echo "$1 minimal Synced Most Current"
+  if [ "${flavor}" = "xubuntu" ]; then
+    if zsync "${MIRROR}/${flavor}/${LTSDIR}daily-minimal/current/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
+    echo "${flavor} minimal Synced Most Current"
     else
       errorstate="true"
       TIMESTAMP=$(date +%Y%m%d)
       while [ "${errorstate}" = "true" ]; do
         try=$((try+1))
-        if zsync "${MIRROR}/$1/${LTSDIR}daily-minimal/${TIMESTAMP}/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
+        if zsync "${MIRROR}/${flavor}/${LTSDIR}daily-minimal/${TIMESTAMP}/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
         unset errorstate
         unset try
-        echo "$1 minimal **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+        echo "${flavor} minimal **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
       else
         TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
         if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
