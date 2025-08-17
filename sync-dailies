@@ -95,6 +95,7 @@ fi
 function syncIsoFn {
   . sync-dailies.config
   OLDCODENAME=${CODENAME}
+  default=current
   if [ "${MIRROR}" = "" ]; then
   MIRROR=http://cdimage.ubuntu.com
   fi
@@ -111,12 +112,13 @@ function syncIsoFn {
   elif [ "$1" = "ubuntu-server" ]; then
     LIVEDIR="daily-live"
     IMGNAME="live-server"
+    default="pending"
   else
     LIVEDIR="daily-live"
     IMGNAME="desktop"
   fi
   if [ "$1" = "ubuntu" ]; then
-    if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+    if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
       echo "$1 Synced Most Current"
       if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
         rm *.zs-old
@@ -146,7 +148,7 @@ function syncIsoFn {
         fi
       done
     fi
-    if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+    if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/${default}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
     echo "$1 arm64-raspi Synced Most Current"
     if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
       rm *.zs-old
@@ -182,7 +184,7 @@ function syncIsoFn {
     cd ..
     return
   fi
-  if zsync "${MIRROR}/$1/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+  if zsync "${MIRROR}/$1/${LTSDIR}${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
     echo "$1 Synced Most Current"
     if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
       rm *.zs-old
@@ -214,7 +216,7 @@ function syncIsoFn {
   fi
   if [ "$1" = "edubuntu" ] || [ "$1" = "ubuntu-server" ]; then
     if [ "$1" = "ubuntu-server" ]; then IMGNAME="server"; fi
-    if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+    if zsync "${MIRROR}/$1/${LTSDIR}daily-preinstalled/${default}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
     echo "$1 arm64-raspi Synced Most Current"
     if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
       rm *.zs-old
@@ -246,7 +248,7 @@ function syncIsoFn {
     fi
   fi
   if [ "$1" = "xubuntu" ]; then
-    if zsync "${MIRROR}/$1/${LTSDIR}daily-minimal/current/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
+    if zsync "${MIRROR}/$1/${LTSDIR}daily-minimal/${default}/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
     echo "$1 minimal Synced Most Current"
     else
       errorstate="true"
@@ -289,6 +291,7 @@ if [ "$1" = "newcycle" ]; then
   chmod +x sync-dailies.config
   CODENAME=$2
   RELEASE=$3
+  default="current"
   if [ "${MIRROR}" = "" ]; then
   MIRROR=http://cdimage.ubuntu.com
   fi
@@ -302,12 +305,13 @@ if [ "$1" = "newcycle" ]; then
   elif [ "${flavor}" = "ubuntu-server" ]; then
     LIVEDIR="daily-live"
     IMGNAME="server"
+    default="pending"
   else
     LIVEDIR="daily-live"
     IMGNAME="desktop"
   fi
   if [ "${flavor}" = "ubuntu" ]; then
-    if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+    if zsync "${MIRROR}/${LTSDIR}${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
       echo "${flavor} Synced Most Current"
       if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
         rm *.zs-old
@@ -337,7 +341,7 @@ if [ "$1" = "newcycle" ]; then
         fi
       done
     fi
-    if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+    if zsync "${MIRROR}/${LTSDIR}daily-preinstalled/${default}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
     echo "${flavor} arm64-raspi Synced Most Current"
     if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
       rm *.zs-old
@@ -370,7 +374,7 @@ if [ "$1" = "newcycle" ]; then
     cd ..
     continue
   fi
-  if zsync "${MIRROR}/${flavor}/${LTSDIR}${LIVEDIR}/current/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+  if zsync "${MIRROR}/${flavor}/${LTSDIR}${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
     echo "${flavor} Synced Most Current"
     if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
       rm *.zs-old
@@ -402,7 +406,7 @@ if [ "$1" = "newcycle" ]; then
   fi
   if [ "${flavor}" = "edubuntu" ] || [ "${flavor}" = "ubuntu-server" ]; then
     if [ "$1" = "ubuntu-server" ]; then IMGNAME="server"; fi
-    if zsync "${MIRROR}/${flavor}/${LTSDIR}daily-preinstalled/current/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+    if zsync "${MIRROR}/${flavor}/${LTSDIR}daily-preinstalled/${default}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
     echo "${flavor} arm64-raspi Synced Most Current"
     if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
       rm *.zs-old
@@ -434,7 +438,7 @@ if [ "$1" = "newcycle" ]; then
     fi
   fi
   if [ "${flavor}" = "xubuntu" ]; then
-    if zsync "${MIRROR}/${flavor}/${LTSDIR}daily-minimal/current/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
+    if zsync "${MIRROR}/${flavor}/${LTSDIR}daily-minimal/${default}/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
     echo "${flavor} minimal Synced Most Current"
     else
       errorstate="true"
