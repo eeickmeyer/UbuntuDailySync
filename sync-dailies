@@ -8,6 +8,7 @@ if [ "$1" = "newconfig" ]; then
   echo "CODENAME=$2" > sync-dailies.config
   echo "RELEASE=$3" >> sync-dailies.config
   echo "MIRROR=" >> sync-dailies.config
+  echo "RELMIRROR=" >> sync-dailies.config
   chmod +x sync-dailies.config
   echo "New config file generated."
   exit 0
@@ -24,6 +25,7 @@ if [ "$1" = "ltsactive" ]; then
   echo "CODENAME=${CODENAME}" > sync-dailies.config
   echo "RELEASE=${RELEASE}.1" >> sync-dailies.config
   echo "MIRROR=${MIRROR}" >> sync-dailies.config
+  echo "RELMIRROR=${RELMIRROR}" >> sync-dailies.config
   echo -e "LTSACTIVE=\"true\"" >> sync-dailies.config
   chmod +x sync-dailies.config
   exit 0
@@ -40,6 +42,7 @@ if [ "$1" = "iteratelts" ]; then
   echo "CODENAME=${CODENAME}" > sync-dailies.config
   echo "RELEASE=${RELEASE}" >> sync-dailies.config
   echo "MIRROR=${MIRROR}" >> sync-dailies.config
+  echo "RELMIRROR=${RELMIRROR}" >> sync-dailies.config
   echo "LTSACTIVE=\"true\"" >> sync-dailies.config
   chmod +x sync-dailies.config
   echo "Release version now updated to ${RELEASE}"
@@ -53,16 +56,19 @@ if [ "$1" = "help" ]; then
   echo "                    [iteratelts]"
   echo "                    [-f <flavor]"
   echo " "
-  echo "newcycle     Updates configuration with new codename, release version,"
-  echo "             and performs sync"
-  echo "newconfig    Creates configuration file with new codename, release"
-  echo "             version, and exits"
-  echo "setmirror    Sets mirror URL (format: without trailing /)"
-  echo "             NOTE: Must be http URL"
-  echo "unsetmirror  Sets mirror to default (http://cdimage.ubuntu.com)"
-  echo "ltsactive    Sets LTS mode to active (disables newcycle)"
-  echo "iteratelts   Iterates to the next LTS point version"
-  echo "-f <flavor>  Syncs only specified flavor"
+  echo "newcycle       Updates configuration with new codename, release version,"
+  echo "               and performs sync"
+  echo "newconfig      Creates configuration file with new codename, release"
+  echo "               version, and exits"
+  echo "setmirror      Sets mirror URL (format: without trailing /)"
+  echo "               NOTE: Must be http URL"
+  echo "setrelmirror   Sets release mirror URL (format: without trailing /)"
+  echo "               NOTE: must be http URL"
+  echo "unsetmirror    Sets mirror to default (http://cdimage.ubuntu.com)"
+  echo "unsetrelmirror Same as unsetmirror, but for release (http://release.ubuntu.com)"
+  echo "ltsactive      Sets LTS mode to active (disables newcycle)"
+  echo "iteratelts     Iterates to the next LTS point version"
+  echo "-f <flavor>    Syncs only specified flavor"
   exit 0
 fi
 if [ "$1" = "setmirror" ]; then
@@ -73,6 +79,7 @@ if [ "$1" = "setmirror" ]; then
   echo "CODENAME=${CODENAME}" > sync-dailies.config
   echo "RELEASE=${RELEASE}" >> sync-dailies.config
   echo "MIRROR=$2" >> sync-dailies.config
+  echo "RELMIRROR=${RELMIRROR}" >> sync-dailies.config
   if [ "${LTSACTIVE}" = "true" ]; then
     echo "LTSACTIVE=\"true\"" >> sync-dailies.config
   fi
@@ -80,10 +87,39 @@ if [ "$1" = "setmirror" ]; then
   echo "New mirror set"
   exit 0
 fi
+if [ "$1" = "setmirror" ]; then
+  if [ "$2" = "" ]; then
+    echo "Usage: sync-dailies setmirror <URL>"
+    exit 1
+  fi
+  echo "CODENAME=${CODENAME}" > sync-dailies.config
+  echo "RELEASE=${RELEASE}" >> sync-dailies.config
+  echo "MIRROR=${MIRROR}" >> sync-dailies.config
+  echo "RELMIRROR=$2" >> sync-dailies.config
+  if [ "${LTSACTIVE}" = "true" ]; then
+    echo "LTSACTIVE=\"true\"" >> sync-dailies.config
+  fi
+  chmod +x sync-dailies.config
+  echo "New release mirror set"
+  exit 0
+fi
 if [ "$1" = "unsetmirror" ]; then
   echo "CODENAME=${CODENAME}" > sync-dailies.config
   echo "RELEASE=${RELEASE}" >> sync-dailies.config
   echo "MIRROR=" >> sync-dailies.config
+  echo "RELMIRROR=${RELMIRROR}" >> sync-dailies.config
+  if [ "${LTSACTIVE}" = "true" ]; then
+    echo "LTSACTIVE=\"true\"" >> sync-dailies.config
+  fi
+  chmod +x sync-dailies.config
+  echo "Mirror set to default"
+  exit 0
+fi
+if [ "$1" = "unsetrelmirror" ]; then
+  echo "CODENAME=${CODENAME}" > sync-dailies.config
+  echo "RELEASE=${RELEASE}" >> sync-dailies.config
+  echo "MIRROR=${MIRROR}" >> sync-dailies.config
+  echo "RELMIRROR=" >> sync-dailies.config
   if [ "${LTSACTIVE}" = "true" ]; then
     echo "LTSACTIVE=\"true\"" >> sync-dailies.config
   fi
@@ -97,7 +133,7 @@ function syncIsoFn {
   OLDCODENAME=${CODENAME}
   default=current
   if [ "${MIRROR}" = "" ]; then
-  MIRROR=http://cdimage.ubuntu.com
+    MIRROR=http://cdimage.ubuntu.com
   fi
   if [ "${LTSACTIVE}" = "true" ]; then LTSDIR="${CODENAME}/"; fi
   echo -e "\nSyncing $1..."
