@@ -1,5 +1,5 @@
 #!/bin/bash
-FLAVORLIST=("edubuntu" "kubuntu" "lubuntu" "ubuntu" "ubuntu-budgie" "ubuntucinnamon" "ubuntukylin" "ubuntu-mate" "ubuntu-mini-iso" "ubuntu-server" "ubuntustudio" "ubuntu-unity" "xubuntu")
+FLAVORLIST=("edubuntu" "kubuntu" "lubuntu" "ubuntu" "ubuntu-budgie" "ubuntucinnamon" "ubuntukylin" "ubuntu-mini-iso" "ubuntu-server" "ubuntustudio" "ubuntu-unity" "xubuntu")
 if [ "$1" = "newconfig" ]; then
   if [ "$2" = "" ] | [ "$3" = "" ]; then
     echo "Usage: sync-dailies newconfig <codename> <releasever>"
