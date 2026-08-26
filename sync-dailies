@@ -148,6 +148,73 @@ function syncIsoFn {
     LIVEDIR="daily-live"
     IMGNAME="desktop"
   fi
+  if [ "$1" = "ubuntu" ]; then
+    if zsync "${MIRROR}/$1/${CODENAME}/${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+      echo "$1 Synced Most Current"
+      if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
+        rm *.zs-old
+      fi
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/$1/${CODENAME}/${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+          unset errorstate
+          unset try
+          echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+          if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
+            rm *.zs-old
+          fi
+        else
+          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+          if [ "${try}" = "5" ]; then
+            echo "Max tries exceeded. Something is spectacularily wrong."
+            if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
+              rm *.zs-old
+            fi
+            break
+          fi
+        fi
+      done
+    fi
+    if zsync "${MIRROR}/$1/${CODENAME}/daily-preinstalled/${default}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+    echo "$1 arm64-raspi Synced Most Current"
+    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+      rm *.zs-old
+    fi
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/$1/${CODENAME}/daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+          unset errorstate
+          unset try
+          echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+          if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+            rm *.zs-old
+          fi
+        else
+          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+          if [ "${try}" = "5" ]; then
+            echo "Max tries exceeded. Something is spectacularily wrong."
+            if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+              rm *.zs-old
+            fi
+            break
+          fi
+        fi
+      done
+    fi
+    if [ -e *.zs-old ]; then
+      rm *.zs-old
+    fi
+    cd ..
+    return
+  fi
   if zsync "${MIRROR}/$1/${CODENAME}/${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
     echo "$1 Synced Most Current"
     if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
@@ -190,7 +257,7 @@ function syncIsoFn {
       TIMESTAMP=$(date +%Y%m%d)
       while [ "${errorstate}" = "true" ]; do
         try=$((try+1))
-        if zsync "${MIRROR}/$1/daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+        if zsync "${MIRROR}/$1/${CODENAME}/daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
         unset errorstate
         unset try
         if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
@@ -272,6 +339,70 @@ if [ "$1" = "newcycle" ]; then
   else
     LIVEDIR="daily-live"
     IMGNAME="desktop"
+  fi
+  if [ "${flavor}" = "ubuntu" ]; then
+    if zsync "${MIRROR}/${flavor}/${CODENAME}/${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+      echo "${flavor} Synced Most Current"
+      if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
+        rm *.zs-old
+      fi
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/${flavor}/${CODENAME}/${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
+          unset errorstate
+          unset try
+          echo "${flavor} amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+          if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
+            rm *.zs-old
+          fi
+        else
+          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+          if [ "${try}" = "5" ]; then
+            echo "Max tries exceeded. Something is spectacularily wrong."
+            if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
+              rm *.zs-old
+            fi
+            break
+          fi
+        fi
+      done
+    fi
+    if zsync "${MIRROR}/${flavor}/${CODENAME}/daily-preinstalled/${default}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+    echo "${flavor} arm64-raspi Synced Most Current"
+    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+      rm *.zs-old
+    fi
+    else
+      errorstate="true"
+      TIMESTAMP=$(date +%Y%m%d)
+      while [ "${errorstate}" = "true" ]; do
+        try=$((try+1))
+        if zsync "${MIRROR}/${flavor}/${CODENAME}/daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
+          unset errorstate
+          unset try
+          echo "${flavor} arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+          if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+            rm *.zs-old
+          fi
+        else
+          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
+          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
+          if [ "${try}" = "5" ]; then
+            echo "Max tries exceeded. Something is spectacularily wrong."
+            if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
+              rm *.zs-old
+            fi
+            break
+          fi
+        fi
+      done
+    fi
+    cd ..
+    continue
   fi
   if zsync "${MIRROR}/${flavor}/${CODENAME}/${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
     echo "${flavor} Synced Most Current"
