@@ -1,19 +1,143 @@
 #!/bin/bash
 FLAVORLIST=("edubuntu" "kubuntu" "lubuntu" "ubuntu" "ubuntu-budgie" "ubuntucinnamon" "ubuntukylin" "ubuntu-mini-iso" "ubuntu-server" "ubuntustudio" "ubuntu-unity" "xubuntu")
-if [ "$1" = "newconfig" ]; then
-  if [ "$2" = "" ] | [ "$3" = "" ]; then
+# ubuntu-mini-iso has no milestone builds
+RELFLAVORLIST=("edubuntu" "kubuntu" "lubuntu" "ubuntu" "ubuntu-budgie" "ubuntucinnamon" "ubuntukylin" "ubuntu-server" "ubuntustudio" "ubuntu-unity" "xubuntu")
+
+write_config() {
+  {
+    echo "CODENAME=${CODENAME}"
+    echo "RELEASE=${RELEASE}"
+    echo "MIRROR=${MIRROR}"
+    echo "RELMIRROR=${RELMIRROR}"
+    [[ "${LTSACTIVE}" = "true" ]] && echo "LTSACTIVE=\"true\""
+  } > sync-dailies.config
+}
+
+# Try zsync against the default dir; on failure, walk back daily timestamps up to 5 tries.
+zsync_retry() {
+  local label="$1" base_url="$2" default_dir="$3" zsync_file="$4" input_file="$5"
+  local try=0 TIMESTAMP
+
+  if zsync "${base_url}/${default_dir}/${zsync_file}" -i "${input_file}"; then
+    echo "${label} Synced Most Current"
+  else
+    TIMESTAMP=$(date +%Y%m%d)
+    while true; do
+      try=$((try+1))
+      if zsync "${base_url}/${TIMESTAMP}/${zsync_file}" -i "${input_file}"; then
+        echo "${label} **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
+        break
+      fi
+      if [[ "${try}" -ge 5 ]]; then
+        echo "Max tries exceeded. Something is spectacularly wrong."
+        break
+      fi
+      TIMESTAMP=$(date -d "${TIMESTAMP} -1 day" +%Y%m%d)
+    done
+  fi
+  rm -f *.zs-old
+}
+
+function syncIsoFn {
+  local flavor="$1"
+  local default="current"
+  local LIVEDIR="daily-live"
+  local IMGNAME="desktop"
+  [[ "${MIRROR}" = "" ]] && MIRROR=http://cdimage.ubuntu.com
+
+  echo -e "\nSyncing ${flavor}..."
+  mkdir -p "${flavor}"; cd "${flavor}"
+
+  case "${flavor}" in
+    ubuntu-mini-iso) IMGNAME="mini-iso" ;;
+    ubuntu-server)   IMGNAME="live-server"; default="pending" ;;
+  esac
+
+  zsync_retry "${flavor} amd64" \
+    "${MIRROR}/${flavor}/${CODENAME}/${LIVEDIR}" \
+    "${default}" \
+    "${CODENAME}-${IMGNAME}-amd64.iso.zsync" \
+    "./${OLDCODENAME}-${IMGNAME}-amd64.iso"
+
+  if [[ "${flavor}" = "ubuntu" || "${flavor}" = "edubuntu" || "${flavor}" = "ubuntu-server" ]]; then
+    local raspi_imgname="${IMGNAME}"
+    [[ "${flavor}" = "ubuntu-server" ]] && raspi_imgname="server"
+    zsync_retry "${flavor} arm64+raspi" \
+      "${MIRROR}/${flavor}/${CODENAME}/daily-preinstalled" \
+      "${default}" \
+      "${CODENAME}-preinstalled-${raspi_imgname}-arm64+raspi.img.xz.zsync" \
+      "./${OLDCODENAME}-preinstalled-${raspi_imgname}-arm64+raspi.img.xz"
+  fi
+
+  if [[ "${flavor}" = "xubuntu" ]]; then
+    zsync_retry "${flavor} minimal" \
+      "${MIRROR}/${flavor}/${CODENAME}/daily-minimal" \
+      "current" \
+      "${CODENAME}-minimal-amd64.iso.zsync" \
+      "./${OLDCODENAME}-minimal-amd64.iso"
+  fi
+
+  cd ..
+}
+
+sync_milestone_fn() {
+  local milestone="$1"
+  local infix=""
+  [[ "${milestone}" = "beta" ]] && infix="-beta"
+  [[ "${MIRROR}" = "" ]] && MIRROR=http://cdimage.ubuntu.com
+  [[ "${RELMIRROR}" = "" ]] && RELMIRROR=http://releases.ubuntu.com
+
+  mkdir -p "${RELEASE}-${milestone}"; cd "${RELEASE}-${milestone}"
+
+  for flavor in "${RELFLAVORLIST[@]}"; do
+    echo -e "\nSyncing ${flavor} ${milestone}..."
+    local imgname="desktop"
+    local base_url="${MIRROR}/${flavor}/releases/${CODENAME}/${milestone}"
+    local file_prefix="${flavor}"
+
+    if [[ "${flavor}" = "ubuntu" || "${flavor}" = "ubuntu-server" ]]; then
+      base_url="${RELMIRROR}/${CODENAME}"
+      file_prefix="ubuntu"
+      [[ "${flavor}" = "ubuntu-server" ]] && imgname="live-server"
+    fi
+
+    zsync "${base_url}/${file_prefix}-${RELEASE}${infix}-${imgname}-amd64.iso.zsync" \
+      -i "../${flavor}/${CODENAME}-${imgname}-amd64.iso"
+
+    if [[ "${flavor}" = "ubuntu" || "${flavor}" = "edubuntu" || "${flavor}" = "ubuntu-server" ]]; then
+      local raspi_imgname="${imgname}" raspi_base raspi_prefix
+      if [[ "${flavor}" = "ubuntu-server" ]]; then
+        raspi_imgname="server"
+        raspi_base="${MIRROR}/releases/${CODENAME}/${milestone}"
+        raspi_prefix="ubuntu"
+      else
+        raspi_base="${MIRROR}/${flavor}/releases/${CODENAME}/${milestone}"
+        raspi_prefix="${flavor}"
+      fi
+      zsync "${raspi_base}/${raspi_prefix}-${RELEASE}${infix}-preinstalled-${raspi_imgname}-arm64+raspi.img.xz.zsync" \
+        -i "../${flavor}/${CODENAME}-preinstalled-${raspi_imgname}-arm64+raspi.img.xz"
+    fi
+
+    if [[ "${flavor}" = "xubuntu" ]]; then
+      zsync "${MIRROR}/xubuntu/releases/${CODENAME}/${milestone}/xubuntu-${RELEASE}${infix}-minimal-amd64.iso.zsync" \
+        -i "../xubuntu/${CODENAME}-minimal-amd64.iso"
+    fi
+  done
+  cd ..
+}
+
+if [[ "$1" = "newconfig" ]]; then
+  if [[ "$2" = "" || "$3" = "" ]]; then
     echo "Usage: sync-dailies newconfig <codename> <releasever>"
     exit 1
   fi
-  echo "CODENAME=$2" > sync-dailies.config
-  echo "RELEASE=$3" >> sync-dailies.config
-  echo "MIRROR=" >> sync-dailies.config
-  echo "RELMIRROR=" >> sync-dailies.config
-  chmod +x sync-dailies.config
+  CODENAME="$2"; RELEASE="$3"; MIRROR=""; RELMIRROR=""
+  write_config
   echo "New config file generated."
   exit 0
 fi
-if [ -f ./sync-dailies.config ]; then
+
+if [[ -f ./sync-dailies.config ]]; then
   . sync-dailies.config
   OLDCODENAME=${CODENAME}
 else
@@ -21,491 +145,129 @@ else
   echo "    sync-dailies newconfig <codename> <releaseversion>"
   exit 1
 fi
-if [ "$1" = "ltsactive" ]; then
-  echo "CODENAME=${CODENAME}" > sync-dailies.config
-  echo "RELEASE=${RELEASE}.1" >> sync-dailies.config
-  echo "MIRROR=${MIRROR}" >> sync-dailies.config
-  echo "RELMIRROR=${RELMIRROR}" >> sync-dailies.config
-  echo -e "LTSACTIVE=\"true\"" >> sync-dailies.config
-  chmod +x sync-dailies.config
+
+if [[ "$1" = "help" ]]; then
+  cat << EOF
+Usage: sync-dailies [newcycle|newconfig <codename> <releaseversion>]
+                    [setmirror <URL>]
+                    [setrelmirror <URL>]
+                    [unsetmirror]
+                    [unsetrelmirror]
+                    [ltsactive]
+                    [iteratelts]
+                    [get-beta]
+                    [get-release]
+                    [-f <flavor>]
+
+newcycle       Updates configuration with new codename, release version,
+               and performs sync
+newconfig      Creates configuration file with new codename, release
+               version, and exits
+setmirror      Sets mirror URL (format: without trailing /)
+               NOTE: Must be http URL
+setrelmirror   Sets release mirror URL (format: without trailing /)
+               NOTE: must be http URL
+unsetmirror    Sets mirror to default (http://cdimage.ubuntu.com)
+unsetrelmirror Same as unsetmirror, but for release (http://releases.ubuntu.com)
+ltsactive      Sets LTS mode to active (disables newcycle)
+iteratelts     Iterates to the next LTS point version
+get-beta       Downloads beta milestone ISOs into <release>-beta/
+get-release    Downloads release ISOs into <release>-release/
+-f <flavor>    Syncs only specified flavor
+EOF
   exit 0
 fi
-if [ "$1" = "iteratelts" ]; then
-  if ! [ "${LTSACTIVE}" = "true" ]; then
-    echo "LTS Mode is not acitve! LTS Point Release iteration not possible!"
+
+if [[ "$1" = "ltsactive" ]]; then
+  RELEASE="${RELEASE}.1"
+  LTSACTIVE="true"
+  write_config
+  exit 0
+fi
+
+if [[ "$1" = "iteratelts" ]]; then
+  if [[ "${LTSACTIVE}" != "true" ]]; then
+    echo "LTS Mode is not active! LTS Point Release iteration not possible!"
     exit 1
   fi
-  p=$(echo "${RELEASE}" | cut -d "." -f 3)
-  p=$((p+1))
-  orig=$(echo "${RELEASE}" | cut -d "." -f 1,2)
-  RELEASE=$(echo "${orig}.${p}")
-  echo "CODENAME=${CODENAME}" > sync-dailies.config
-  echo "RELEASE=${RELEASE}" >> sync-dailies.config
-  echo "MIRROR=${MIRROR}" >> sync-dailies.config
-  echo "RELMIRROR=${RELMIRROR}" >> sync-dailies.config
-  echo "LTSACTIVE=\"true\"" >> sync-dailies.config
-  chmod +x sync-dailies.config
+  p=$(( ${RELEASE##*.} + 1 ))
+  RELEASE="${RELEASE%.*}.${p}"
+  write_config
   echo "Release version now updated to ${RELEASE}"
   exit 0
 fi
-if [ "$1" = "help" ]; then
-  echo "Usage: sync-dailies [newcycle|newconfig <codename> <releaseversion>]"
-  echo "                    [setmirror <URL>]"
-  echo "                    [unsetmirror]"
-  echo "                    [ltsactive]"
-  echo "                    [iteratelts]"
-  echo "                    [-f <flavor]"
-  echo " "
-  echo "newcycle       Updates configuration with new codename, release version,"
-  echo "               and performs sync"
-  echo "newconfig      Creates configuration file with new codename, release"
-  echo "               version, and exits"
-  echo "setmirror      Sets mirror URL (format: without trailing /)"
-  echo "               NOTE: Must be http URL"
-  echo "setrelmirror   Sets release mirror URL (format: without trailing /)"
-  echo "               NOTE: must be http URL"
-  echo "unsetmirror    Sets mirror to default (http://cdimage.ubuntu.com)"
-  echo "unsetrelmirror Same as unsetmirror, but for release (http://release.ubuntu.com)"
-  echo "ltsactive      Sets LTS mode to active (disables newcycle)"
-  echo "iteratelts     Iterates to the next LTS point version"
-  echo "-f <flavor>    Syncs only specified flavor"
-  exit 0
-fi
-if [ "$1" = "setmirror" ]; then
-  if [ "$2" = "" ]; then
+
+if [[ "$1" = "setmirror" ]]; then
+  if [[ "$2" = "" ]]; then
     echo "Usage: sync-dailies setmirror <URL>"
     exit 1
   fi
-  echo "CODENAME=${CODENAME}" > sync-dailies.config
-  echo "RELEASE=${RELEASE}" >> sync-dailies.config
-  echo "MIRROR=$2" >> sync-dailies.config
-  echo "RELMIRROR=${RELMIRROR}" >> sync-dailies.config
-  if [ "${LTSACTIVE}" = "true" ]; then
-    echo "LTSACTIVE=\"true\"" >> sync-dailies.config
-  fi
-  chmod +x sync-dailies.config
+  MIRROR="$2"
+  write_config
   echo "New mirror set"
   exit 0
 fi
-if [ "$1" = "setmirror" ]; then
-  if [ "$2" = "" ]; then
-    echo "Usage: sync-dailies setmirror <URL>"
+
+if [[ "$1" = "setrelmirror" ]]; then
+  if [[ "$2" = "" ]]; then
+    echo "Usage: sync-dailies setrelmirror <URL>"
     exit 1
   fi
-  echo "CODENAME=${CODENAME}" > sync-dailies.config
-  echo "RELEASE=${RELEASE}" >> sync-dailies.config
-  echo "MIRROR=${MIRROR}" >> sync-dailies.config
-  echo "RELMIRROR=$2" >> sync-dailies.config
-  if [ "${LTSACTIVE}" = "true" ]; then
-    echo "LTSACTIVE=\"true\"" >> sync-dailies.config
-  fi
-  chmod +x sync-dailies.config
+  RELMIRROR="$2"
+  write_config
   echo "New release mirror set"
   exit 0
 fi
-if [ "$1" = "unsetmirror" ]; then
-  echo "CODENAME=${CODENAME}" > sync-dailies.config
-  echo "RELEASE=${RELEASE}" >> sync-dailies.config
-  echo "MIRROR=" >> sync-dailies.config
-  echo "RELMIRROR=${RELMIRROR}" >> sync-dailies.config
-  if [ "${LTSACTIVE}" = "true" ]; then
-    echo "LTSACTIVE=\"true\"" >> sync-dailies.config
-  fi
-  chmod +x sync-dailies.config
-  echo "Mirror set to default"
-  exit 0
-fi
-if [ "$1" = "unsetrelmirror" ]; then
-  echo "CODENAME=${CODENAME}" > sync-dailies.config
-  echo "RELEASE=${RELEASE}" >> sync-dailies.config
-  echo "MIRROR=${MIRROR}" >> sync-dailies.config
-  echo "RELMIRROR=" >> sync-dailies.config
-  if [ "${LTSACTIVE}" = "true" ]; then
-    echo "LTSACTIVE=\"true\"" >> sync-dailies.config
-  fi
-  chmod +x sync-dailies.config
+
+if [[ "$1" = "unsetmirror" ]]; then
+  MIRROR=""
+  write_config
   echo "Mirror set to default"
   exit 0
 fi
 
-function syncIsoFn {
-  . sync-dailies.config
-  OLDCODENAME=${CODENAME}
-  default=current
-  if [ "${MIRROR}" = "" ]; then
-    MIRROR=http://cdimage.ubuntu.com
-  fi
-  echo -e "\nSyncing $1..."
-  mkdir -p $1; cd $1
-  if [ "$1" = "ubuntu-mini-iso" ]; then
-    LIVEDIR="daily-live"
-    IMGNAME="mini-iso"
-  elif [ "$1" = "ubuntu-server" ]; then
-    LIVEDIR="daily-live"
-    IMGNAME="live-server"
-    default="pending"
-  else
-    LIVEDIR="daily-live"
-    IMGNAME="desktop"
-  fi
-  if [ "$1" = "ubuntu" ]; then
-    if zsync "${MIRROR}/$1/${CODENAME}/${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
-      echo "$1 Synced Most Current"
-      if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-        rm *.zs-old
-      fi
-    else
-      errorstate="true"
-      TIMESTAMP=$(date +%Y%m%d)
-      while [ "${errorstate}" = "true" ]; do
-        try=$((try+1))
-        if zsync "${MIRROR}/$1/${CODENAME}/${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
-          unset errorstate
-          unset try
-          echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-          if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-            rm *.zs-old
-          fi
-        else
-          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
-          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
-          if [ "${try}" = "5" ]; then
-            echo "Max tries exceeded. Something is spectacularily wrong."
-            if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-              rm *.zs-old
-            fi
-            break
-          fi
-        fi
-      done
-    fi
-    if zsync "${MIRROR}/$1/${CODENAME}/daily-preinstalled/${default}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
-    echo "$1 arm64-raspi Synced Most Current"
-    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-      rm *.zs-old
-    fi
-    else
-      errorstate="true"
-      TIMESTAMP=$(date +%Y%m%d)
-      while [ "${errorstate}" = "true" ]; do
-        try=$((try+1))
-        if zsync "${MIRROR}/$1/${CODENAME}/daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
-          unset errorstate
-          unset try
-          echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-          if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-            rm *.zs-old
-          fi
-        else
-          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
-          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
-          if [ "${try}" = "5" ]; then
-            echo "Max tries exceeded. Something is spectacularily wrong."
-            if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-              rm *.zs-old
-            fi
-            break
-          fi
-        fi
-      done
-    fi
-    if [ -e *.zs-old ]; then
-      rm *.zs-old
-    fi
-    cd ..
-    return
-  fi
-  if zsync "${MIRROR}/$1/${CODENAME}/${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
-    echo "$1 Synced Most Current"
-    if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-      rm *.zs-old
-    fi
-  else
-    errorstate="true"
-    TIMESTAMP=$(date +%Y%m%d)
-    while [ "${errorstate}" = "true" ]; do
-      try=$((try+1))
-      if zsync "${MIRROR}/$1/${CODENAME}/${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
-        unset errorstate
-        unset try
-        echo "$1 amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-        if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-          rm *.zs-old
-        fi
-      else
-        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
-        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
-        if [ "${try}" = "5" ]; then
-          echo "Max tries exceeded. Something is spectacularily wrong."
-          if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-            rm *.zs-old
-          fi
-          break; return 1
-        fi
-      fi
-    done
-  fi
-  if [ "$1" = "edubuntu" ] || [ "$1" = "ubuntu" ] || [ "$1" = "ubuntu-server" ]; then
-    if [ "$1" = "ubuntu-server" ]; then IMGNAME="server"; fi
-    if zsync "${MIRROR}/$1/${CODENAME}/daily-preinstalled/${default}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
-    echo "$1 arm64-raspi Synced Most Current"
-    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-      rm *.zs-old
-    fi
-    else
-      errorstate="true"
-      TIMESTAMP=$(date +%Y%m%d)
-      while [ "${errorstate}" = "true" ]; do
-        try=$((try+1))
-        if zsync "${MIRROR}/$1/${CODENAME}/daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
-        unset errorstate
-        unset try
-        if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-          rm *.zs-old
-        fi
-        echo "$1 arm64+raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-      else
-        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
-        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
-        if [ "${try}" = "5" ]; then
-          echo "Max tries exceeded. Something is spectacularily wrong."
-          if [ -e ${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zs-old ]; then
-            rm *.zs-old
-          fi
-          break; return 1
-        fi
-      fi
-    done
-    fi
-  fi
-  if [ "$1" = "xubuntu" ]; then
-    if zsync "${MIRROR}/$1/${CODENAME}/daily-minimal/${default}/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
-    echo "$1 minimal Synced Most Current"
-    else
-      errorstate="true"
-      TIMESTAMP=$(date +%Y%m%d)
-      while [ "${errorstate}" = "true" ]; do
-        try=$((try+1))
-        if zsync "${MIRROR}/$1/${CODENAME}/daily-minimal/${TIMESTAMP}/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
-        unset errorstate
-        unset try
-        echo "$1 minimal **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-      else
-        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
-        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
-        if [ "${try}" = "5" ]; then
-          echo "Max tries exceeded. Something is spectacularily wrong."
-          break; return 1
-        fi
-      fi
-    done
-    fi
-  fi
-  if [ -e *.zs-old ]; then
-    rm *.zs-old
-  fi
-  cd ..
-}
+if [[ "$1" = "unsetrelmirror" ]]; then
+  RELMIRROR=""
+  write_config
+  echo "Release mirror set to default"
+  exit 0
+fi
 
-if [ "$1" = "newcycle" ]; then
-  if [ "{$LTSACTIVE}" = "true" ]; then
-    echo "LTS mode is acitve. New cycle cannot be started from here."
+if [[ "$1" = "get-beta" ]]; then
+  sync_milestone_fn "beta"
+  exit 0
+fi
+
+if [[ "$1" = "get-release" ]]; then
+  sync_milestone_fn "release"
+  exit 0
+fi
+
+if [[ "$1" = "newcycle" ]]; then
+  if [[ "${LTSACTIVE}" = "true" ]]; then
+    echo "LTS mode is active. New cycle cannot be started from here."
     exit 1
   fi
-  if [ "$2" = "" ] | [ "$3" = "" ]; then
+  if [[ "$2" = "" || "$3" = "" ]]; then
     echo "Usage: sync-dailies newcycle <codename> <releaseversion>"
     exit 1
   fi
-  echo "CODENAME=$2" > sync-dailies.config
-  echo "RELEASE=$3" >> sync-dailies.config
-  echo "MIRROR=${MIRROR}" >> sync-dailies.config
-  chmod +x sync-dailies.config
-  CODENAME=$2
-  RELEASE=$3
-  default="current"
-  if [ "${MIRROR}" = "" ]; then
-  MIRROR=http://cdimage.ubuntu.com
-  fi
-  for flavor in ${FLAVORLIST[@]}; do
-  echo -e "\nSyncing ${flavor}..."
-  mkdir -p ${flavor}; cd ${flavor}
-  if [ "${flavor}" = "ubuntu-mini-iso" ]; then
-    LIVEDIR="daily-live"
-    IMGNAME="mini-iso"
-  elif [ "${flavor}" = "ubuntu-server" ]; then
-    LIVEDIR="daily-live"
-    IMGNAME="server"
-    default="pending"
-  else
-    LIVEDIR="daily-live"
-    IMGNAME="desktop"
-  fi
-  if [ "${flavor}" = "ubuntu" ]; then
-    if zsync "${MIRROR}/${flavor}/${CODENAME}/${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
-      echo "${flavor} Synced Most Current"
-      if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-        rm *.zs-old
-      fi
-    else
-      errorstate="true"
-      TIMESTAMP=$(date +%Y%m%d)
-      while [ "${errorstate}" = "true" ]; do
-        try=$((try+1))
-        if zsync "${MIRROR}/${flavor}/${CODENAME}/${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
-          unset errorstate
-          unset try
-          echo "${flavor} amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-          if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-            rm *.zs-old
-          fi
-        else
-          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
-          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
-          if [ "${try}" = "5" ]; then
-            echo "Max tries exceeded. Something is spectacularily wrong."
-            if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-              rm *.zs-old
-            fi
-            break
-          fi
-        fi
-      done
-    fi
-    if zsync "${MIRROR}/${flavor}/${CODENAME}/daily-preinstalled/${default}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
-    echo "${flavor} arm64-raspi Synced Most Current"
-    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-      rm *.zs-old
-    fi
-    else
-      errorstate="true"
-      TIMESTAMP=$(date +%Y%m%d)
-      while [ "${errorstate}" = "true" ]; do
-        try=$((try+1))
-        if zsync "${MIRROR}/${flavor}/${CODENAME}/daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
-          unset errorstate
-          unset try
-          echo "${flavor} arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-          if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-            rm *.zs-old
-          fi
-        else
-          TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
-          if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
-          if [ "${try}" = "5" ]; then
-            echo "Max tries exceeded. Something is spectacularily wrong."
-            if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-              rm *.zs-old
-            fi
-            break
-          fi
-        fi
-      done
-    fi
-    cd ..
-    continue
-  fi
-  if zsync "${MIRROR}/${flavor}/${CODENAME}/${LIVEDIR}/${default}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
-    echo "${flavor} Synced Most Current"
-    if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-      rm *.zs-old
-    fi
-  else
-    errorstate="true"
-    TIMESTAMP=$(date +%Y%m%d)
-    while [ "${errorstate}" = "true" ]; do
-      try=$((try+1))
-      if zsync "${MIRROR}/${flavor}/${CODENAME}/${LIVEDIR}/${TIMESTAMP}/${CODENAME}-${IMGNAME}-amd64.iso.zsync" -i "./${OLDCODENAME}-${IMGNAME}-amd64.iso"; then
-        unset errorstate
-        unset try
-        echo "${flavor} amd64 **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-        if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-          rm *.zs-old
-        fi
-      else
-        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
-        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
-        if [ "${try}" = "5" ]; then
-          echo "Max tries exceeded. Something is spectacularily wrong."
-          if [ -e ${CODENAME}-${IMGNAME}-amd64.iso.zs-old ]; then
-            rm *.zs-old
-          fi
-          break
-        fi
-      fi
-    done
-  fi
-  if [ "${flavor}" = "edubuntu" ] || [ "${flavor}" = "ubuntu" ] || [ "${flavor}" = "ubuntu-server" ]; then
-    if [ "$1" = "ubuntu-server" ]; then IMGNAME="server"; fi
-    if zsync "${MIRROR}/${flavor}/${CODENAME}/daily-preinstalled/${default}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
-    echo "${flavor} arm64-raspi Synced Most Current"
-    if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-      rm *.zs-old
-    fi
-    else
-      errorstate="true"
-      TIMESTAMP=$(date +%Y%m%d)
-      while [ "${errorstate}" = "true" ]; do
-        try=$((try+1))
-        if zsync "${MIRROR}/$1/${CODENAME}/daily-preinstalled/${TIMESTAMP}/${CODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz.zsync" -i  "./${OLDCODENAME}-preinstalled-${IMGNAME}-arm64+raspi.img.xz"; then
-        unset errorstate
-        unset try
-        echo "$1 arm64-raspi **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-        if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-          rm *.zs-old
-        fi
-      else
-        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
-        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
-        if [ "${try}" = "5" ]; then
-          echo "Max tries exceeded. Something is spectacularily wrong."
-          if [ -e ${CODENAME}-preinstalled-desktop-arm64+raspi.img.xz.zs-old ]; then
-            rm *.zs-old
-            break
-          fi
-          break
-        fi
-      fi
-    done
-    fi
-  fi
-  if [ "${flavor}" = "xubuntu" ]; then
-    if zsync "${MIRROR}/${flavor}/${CODENAME}/daily-minimal/${default}/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
-    echo "${flavor} minimal Synced Most Current"
-    else
-      errorstate="true"
-      TIMESTAMP=$(date +%Y%m%d)
-      while [ "${errorstate}" = "true" ]; do
-        try=$((try+1))
-        if zsync "${MIRROR}/${flavor}/${CODENAME}/daily-minimal/${TIMESTAMP}/${CODENAME}-minimal-amd64.iso.zsync" -i  "./${OLDCODENAME}-minimal-amd64.iso"; then
-        unset errorstate
-        unset try
-        echo "${flavor} minimal **ENCOUNTERED ERROR** - Synced ${TIMESTAMP}"
-      else
-        TIMESTAMP=$((TIMESTAMP-1)); dt=$(echo "${TIMESTAMP}" | cut -c 7-)
-        if [ "${dt}" = "99" ]; then TIMESTAMP=$((TIMESTAMP-68)); fi
-        if [ "${try}" = "5" ]; then
-          echo "Max tries exceeded. Something is spectacularily wrong."
-          break
-        fi
-      fi
-    done
-    fi
-  fi
-  if [ -e *.zs-old ]; then
-    rm *.zs-old
-  fi
-  cd ..
+  CODENAME="$2"
+  RELEASE="$3"
+  LTSACTIVE=""
+  write_config
+  for flavor in "${FLAVORLIST[@]}"; do
+    syncIsoFn "${flavor}"
   done
   exit 0
 fi
-if [ "$1" = "-f" ]; then
-  for flavor in ${FLAVORLIST[@]}; do
-    if [ "$2" = "${flavor}" ]; then
-      validflavor="true"
-    fi
+
+if [[ "$1" = "-f" ]]; then
+  for flavor in "${FLAVORLIST[@]}"; do
+    [[ "$2" = "${flavor}" ]] && validflavor="true"
   done
-  if [ "${validflavor}" = "true" ]; then
-    syncIsoFn $2
+  if [[ "${validflavor}" = "true" ]]; then
+    syncIsoFn "$2"
     exit 0
   else
     echo "Invalid flavor. Please select from the following flavors:"
@@ -513,10 +275,10 @@ if [ "$1" = "-f" ]; then
     exit 1
   fi
 fi
-if [ "$1" = "" ]; then
-  for flavor in ${FLAVORLIST[@]}; do
-    echo -e "\nSyncing $1..."
-    syncIsoFn ${flavor}
+
+if [[ "$1" = "" ]]; then
+  for flavor in "${FLAVORLIST[@]}"; do
+    syncIsoFn "${flavor}"
   done
   exit 0
 else
